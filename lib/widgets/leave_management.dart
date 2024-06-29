@@ -30,7 +30,8 @@ class _LeaveManagementState extends State<LeaveManagement> {
           children: [
             Expanded(
               child: DropdownButton<Doctor>(
-                hint: Text('Select Doctor'),
+                isExpanded: true,
+                hint: const Text('Select Doctor'),
                 value: _selectedDoctor,
                 onChanged: (Doctor? newValue) {
                   setState(() {

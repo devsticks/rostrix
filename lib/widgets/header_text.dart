@@ -16,7 +16,7 @@ class HeaderText extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(text, textAlign: TextAlign.left, softWrap: true),
+            Text(text, textAlign: TextAlign.left, softWrap: false),
           ],
         ),
       ),
