@@ -163,15 +163,14 @@ void main() {
           type: 'Weekday',
           mainDoctor: doctor1,
           caesarCoverDoctor: doctor2,
-          secondOnCallDoctor: doctor3,
-          weekendDayDoctor: doctor4);
+          secondOnCallDoctor: doctor3);
       final copiedShift = shift.copy();
       expect(copiedShift.date, date);
       expect(copiedShift.type, 'Weekday');
       expect(copiedShift.mainDoctor, doctor1);
       expect(copiedShift.caesarCoverDoctor, doctor2);
       expect(copiedShift.secondOnCallDoctor, doctor3);
-      expect(copiedShift.weekendDayDoctor, doctor4);
+      expect(copiedShift.weekendDayDoctor, null);
     });
 
     test('Weekend shift can be copied', () {
@@ -336,8 +335,7 @@ void main() {
           type: 'Weekday',
           mainDoctor: doctor1,
           caesarCoverDoctor: doctor2,
-          secondOnCallDoctor: doctor3,
-          weekendDayDoctor: doctor4);
+          secondOnCallDoctor: doctor3);
       expect(shift1 == shift2, false);
     });
 

@@ -238,4 +238,102 @@ void main() {
       expect(doctor1 == doctor1, true);
     });
   });
+
+  group('Doctor leave expansion tests', () {
+    // Define the Doctor object outside the individual tests
+    late Doctor doctor;
+
+    // Use setUp to initialize the Doctor object before each test
+    setUp(() {
+      doctor = Doctor(
+        name: 'Dr Test',
+        canPerformCaesars: true,
+        canPerformAnaesthetics: true,
+      );
+    });
+
+    test('Leave expansion includes weekend before a Monday', () {
+      doctor.leaveDays.add(DateTime(2024, 7, 8));
+      expect(doctor.leaveDays[0].weekday, DateTime.monday);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 7)), true);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 6)), true);
+    });
+
+    test('Leave expansion includes Friday before a Monday', () {
+      doctor.leaveDays.add(DateTime(2024, 7, 8));
+      expect(doctor.leaveDays[0].weekday, DateTime.monday);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 7)), true);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 6)), true);
+    });
+
+    test('Leave expansion includes weekend after a Friday', () {
+      doctor.leaveDays.add(DateTime(2024, 7, 5));
+      expect(doctor.leaveDays[0].weekday, DateTime.friday);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 6)), true);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 7)), true);
+    });
+
+    test(
+        'Leave expansion includes all contiguous public holidays after a Friday',
+        () {
+      doctor.leaveDays.add(DateTime(2023, 12, 22));
+      expect(doctor.leaveDays[0].weekday, DateTime.friday);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2023, 12, 25)), true);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2023, 12, 26)), true);
+    });
+
+    test(
+        'Leave expansions includes contiguous public holidays following a weekday',
+        () {
+      doctor.leaveDays.add(DateTime(2023, 06, 15));
+      expect(doctor.leaveDays[0].weekday, DateTime.thursday);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2023, 6, 16)), true);
+    });
+
+    test(
+        'Leave expansions includes contiguous public holidays following a weekday and the weekend if public holiday is a Friday',
+        () {
+      doctor.leaveDays.add(DateTime(2023, 06, 15));
+      expect(doctor.leaveDays[0].weekday, DateTime.thursday);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2023, 6, 16)), true);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2023, 6, 17)), true);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2023, 6, 18)), true);
+    });
+
+    test(
+        'Leave expansion includes contiguous public holidays preceding a weekday',
+        () {
+      doctor.leaveDays.add(DateTime(2023, 5, 2));
+      expect(doctor.leaveDays[0].weekday, DateTime.tuesday);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2023, 5, 1)), true);
+    });
+
+    test(
+        'Leave expansion includes contiguous public holidays preceding a weekday plus the weekend and Friday if public holiday is a Monday',
+        () {
+      doctor.leaveDays.add(DateTime(2023, 5, 2));
+      expect(doctor.leaveDays[0].weekday, DateTime.tuesday);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2023, 5, 1)), true);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2023, 4, 30)), true);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2023, 4, 29)), true);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2023, 4, 28)), true);
+    });
+  });
 }

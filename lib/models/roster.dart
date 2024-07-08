@@ -207,8 +207,8 @@ class Roster {
 
   bool _isDoctorAvailable(Doctor doctor, String role, DateTime date,
       [List<Doctor?>? avoidDoctors]) {
-    // Check if the doctor is on leave
-    if (doctor.leaveDays.contains(date)) return false;
+    // Check if the doctor is on leave (or if this is a Friday/weekend/holiday contiguous to a leave block)
+    if (doctor.getExpandedLeaveDays().contains(date)) return false;
 
     // Check if the doctor is not assigned to another shift on the same date
     for (Shift shift in shifts) {

@@ -74,4 +74,68 @@ class Doctor {
     }
     return true;
   }
+
+  /// Given a list of days, produces a list additionally containing any contiguous
+  /// weekends and public holidays, as well as the preceding Friday.
+  List<DateTime> getExpandedLeaveDays() {
+    Set<DateTime> expandedDays = Set<DateTime>.from(leaveDays);
+
+    for (DateTime day in leaveDays) {
+      // Add the day itself
+      expandedDays.add(day);
+
+      // Check and add preceding days (including Friday)
+      DateTime current = day.subtract(Duration(days: 1));
+      while (current.weekday == DateTime.sunday ||
+          current.weekday == DateTime.saturday ||
+          isPublicHoliday(current) ||
+          current.weekday == DateTime.friday) {
+        expandedDays.add(current);
+        current = current.subtract(Duration(days: 1));
+      }
+
+      // Check and add following days
+      current = day.add(Duration(days: 1));
+      while (current.weekday == DateTime.saturday ||
+          current.weekday == DateTime.sunday ||
+          isPublicHoliday(current)) {
+        expandedDays.add(current);
+        current = current.add(Duration(days: 1));
+      }
+    }
+
+    return expandedDays.toList()..sort();
+  }
+
+  bool isPublicHoliday(DateTime date) {
+    int year = date.year;
+    List<DateTime> publicHolidays = getPublicHolidays(year);
+    return publicHolidays.contains(date);
+  }
+
+  // Helper function to check if a given date is a public holiday
+  List<DateTime> getPublicHolidays(int year) {
+    List<DateTime> publicHolidays = [
+      DateTime(year, 1, 1), // New Year's Day
+      DateTime(year, 3, 21), // Human Rights Day
+      DateTime(year, 4, 27), // Freedom Day
+      DateTime(year, 5, 1), // Workers' Day
+      DateTime(year, 6, 16), // Youth Day
+      DateTime(year, 8, 9), // National Women's Day
+      DateTime(year, 9, 24), // Heritage Day
+      DateTime(year, 12, 16), // Day of Reconciliation
+      DateTime(year, 12, 25), // Christmas Day
+      DateTime(year, 12, 26), // Day of Goodwill
+    ];
+
+    // Adjust holidays falling on a Sunday
+    publicHolidays = publicHolidays.map((holiday) {
+      if (holiday.weekday == DateTime.sunday) {
+        return holiday.add(const Duration(days: 1));
+      }
+      return holiday;
+    }).toList();
+
+    return publicHolidays;
+  }
 }
