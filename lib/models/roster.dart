@@ -92,8 +92,8 @@ class Roster {
     bool isWeekendPair = (shift.date.weekday == DateTime.saturday) &&
         nextDay.weekday == DateTime.sunday;
 
-    // if Sunday, skip to next day
-    if (shift.date.weekday == DateTime.sunday) return;
+    // if shift already assigned, return
+    if (shift.fullyStaffed()) return;
 
     List<Doctor> dayShiftDoctors =
         _findAvailableDoctorsForDayShift(shift.date, nextDay);
@@ -141,7 +141,8 @@ class Roster {
       _updateDoctorOvertime(shift.mainDoctor!, 'Overnight Weekend');
       _updateDoctorOvertime(shift.caesarCoverDoctor!, 'Caesar Cover Weekend');
 
-      if (isWeekendPair) {
+      Shift lastShift = shifts[shifts.length - 1];
+      if (isWeekendPair && shift != lastShift) {
         Shift nextDayShift = shifts.firstWhere((s) => s.date == nextDay);
         nextDayShift.weekendDayDoctor = shift.weekendDayDoctor!;
         nextDayShift.secondOnCallDoctor = shift.secondOnCallDoctor!;
@@ -314,6 +315,7 @@ class Roster {
     List<Doctor> bestDoctors = [];
     List<Shift> bestShifts = [];
     double bestScore = double.infinity;
+    int validRostersFound = 0;
 
     for (int i = 0; i < retries; i++) {
       // Create deep copies of the doctors and shifts for each retry
@@ -352,6 +354,7 @@ class Roster {
 
       if (tempRoster.filled) {
         // If a valid roster is found, calculate the score
+        validRostersFound++;
         double score = tempRoster._calculateScore();
         if (score < bestScore) {
           bestScore = score;
@@ -361,8 +364,15 @@ class Roster {
       }
     }
 
-    doctors = bestDoctors;
-    shifts = bestShifts;
+    if (validRostersFound == 0) {
+      print('No valid roster permutations found in $retries tries');
+    } else {
+      if (validRostersFound / retries < 0.1) {
+        print('< 10\% of roster permutations were valid');
+      }
+      doctors = bestDoctors;
+      shifts = bestShifts;
+    }
   }
 
   double _calculateScore(

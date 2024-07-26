@@ -27,8 +27,11 @@ class RosterHomePageState extends State<RosterHomePage> {
     'Caesar Cover Weekend': 3.6,
   };
   double maxOvertimeHours = 90;
+  // year and month for next month
+  // int year = DateTime.now().add(const Duration(days: 31)).year;
+  // int month = DateTime.now().add(const Duration(days: 31)).month;
   int year = 2024;
-  int month = 7;
+  int month = 9;
 
   @override
   void initState() {
@@ -191,8 +194,37 @@ class RosterHomePageState extends State<RosterHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Doctors Overtime Call Roster'),
+        title: Text('Doctors\' Overtime Call Roster'),
         actions: [
+          // Input for the year and month
+          Row(
+            children: [
+              Text('Year: '),
+              Container(
+                width: 60,
+                child: TextField(
+                  controller: TextEditingController(text: year.toString()),
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    year = int.tryParse(value) ?? year;
+                    _initializeShifts();
+                  },
+                ),
+              ),
+              Text('Month: '),
+              Container(
+                width: 60,
+                child: TextField(
+                  controller: TextEditingController(text: month.toString()),
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    month = int.tryParse(value) ?? month;
+                    _initializeShifts();
+                  },
+                ),
+              ),
+            ],
+          ),
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: () {

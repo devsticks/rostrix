@@ -60,4 +60,11 @@ class Shift {
         secondOnCallDoctor.hashCode ^
         weekendDayDoctor.hashCode;
   }
+
+  bool fullyStaffed() {
+    return mainDoctor != null &&
+        caesarCoverDoctor != null &&
+        secondOnCallDoctor != null &&
+        weekendDayDoctor != null;
+  }
 }
