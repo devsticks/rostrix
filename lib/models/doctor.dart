@@ -75,8 +75,8 @@ class Doctor {
     return true;
   }
 
-  /// Given a list of days, produces a list additionally containing any contiguous
-  /// weekends and public holidays, as well as the preceding Friday.
+  /// Given a list of days, produces a sorted list additionally containing any contiguous
+  /// weekends and public holidays, as well as the preceding day.
   List<DateTime> getExpandedLeaveDays() {
     Set<DateTime> expandedDays = Set<DateTime>.from(leaveDays);
 
@@ -84,14 +84,21 @@ class Doctor {
       // Add the day itself
       expandedDays.add(day);
 
-      // Check and add preceding days (including Friday)
+      // Check and add preceding weekend / holiday days
       DateTime current = day.subtract(Duration(days: 1));
       while (current.weekday == DateTime.sunday ||
           current.weekday == DateTime.saturday ||
-          isPublicHoliday(current) ||
-          current.weekday == DateTime.friday) {
+          current.weekday == DateTime.friday ||
+          isPublicHoliday(current)) {
         expandedDays.add(current);
         current = current.subtract(Duration(days: 1));
+      }
+
+      // Add preceding weekday
+      var precedingDay = day.subtract(const Duration(days: 1));
+      if (precedingDay.weekday != DateTime.saturday &&
+          precedingDay.weekday != DateTime.sunday) {
+        expandedDays.add(precedingDay);
       }
 
       // Check and add following days

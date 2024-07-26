@@ -5,12 +5,14 @@ class LeaveManagement extends StatefulWidget {
   final List<Doctor> doctors;
   final Function(Doctor, List<DateTime>) onAddLeave;
   final Function(Doctor, List<DateTime>) onRemoveLeave;
+  final ValueNotifier<bool> postCallBeforeLeaveValueNotifier;
 
   const LeaveManagement({
     Key? key,
     required this.doctors,
     required this.onAddLeave,
     required this.onRemoveLeave,
+    required this.postCallBeforeLeaveValueNotifier,
   }) : super(key: key);
 
   @override
@@ -21,11 +23,32 @@ class _LeaveManagementState extends State<LeaveManagement> {
   final TextEditingController _startDateController = TextEditingController();
   final TextEditingController _endDateController = TextEditingController();
   Doctor? _selectedDoctor;
+  late bool _postCallBeforeLeave;
+
+  @override
+  void initState() {
+    super.initState();
+    _postCallBeforeLeave = widget.postCallBeforeLeaveValueNotifier.value;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Row(
+          children: [
+            // Check box for whether a doctor should be post-call the day before they start their leave
+            Checkbox(
+                value: _postCallBeforeLeave,
+                onChanged: (value) {
+                  setState(() {
+                    _postCallBeforeLeave = value!;
+                    widget.postCallBeforeLeaveValueNotifier.value = value;
+                  });
+                }),
+            const Text('Post-call the day before leave'),
+          ],
+        ),
         Row(
           children: [
             Expanded(

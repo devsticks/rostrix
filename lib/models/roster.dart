@@ -7,6 +7,7 @@ class Roster {
   List<Shift> shifts;
   Map<String, double> hoursPerShiftType;
   double maxOvertimeHours;
+  bool postCallBeforeLeave;
   bool filled = true;
 
   Roster({
@@ -14,6 +15,7 @@ class Roster {
     required this.shifts,
     required this.hoursPerShiftType,
     this.maxOvertimeHours = 90,
+    this.postCallBeforeLeave = true,
   });
 
   void assignShifts() {
@@ -166,6 +168,17 @@ class Roster {
 
     if (availableDoctors.isEmpty) return null;
 
+    // only pick from doctors about to go on leave if postCallBeforeLeave enabled
+    List<Doctor> preLeaveDoctors = [];
+    if (postCallBeforeLeave) {
+      preLeaveDoctors = availableDoctors
+          .where((doc) =>
+              doc.getExpandedLeaveDays().isNotEmpty &&
+              doc.getExpandedLeaveDays()[0].difference(date).inDays == 1)
+          .toList();
+    }
+    if (preLeaveDoctors.isNotEmpty) availableDoctors = preLeaveDoctors;
+
     // Add randomness
     availableDoctors.shuffle(Random());
 
@@ -207,8 +220,32 @@ class Roster {
 
   bool _isDoctorAvailable(Doctor doctor, String role, DateTime date,
       [List<Doctor?>? avoidDoctors]) {
+    List<DateTime> leaveDays = doctor.getExpandedLeaveDays();
+
     // Check if the doctor is on leave (or if this is a Friday/weekend/holiday contiguous to a leave block)
-    if (doctor.getExpandedLeaveDays().contains(date)) return false;
+    if (leaveDays.contains(date)) return false;
+
+    // If post-call before leave is enabled, give at least 3 nights' leeway before that call,
+    // but show the doctor as available for that last day
+    const int daysBeforeLastCall = 3;
+    if (postCallBeforeLeave && leaveDays.isNotEmpty) {
+      for (DateTime leaveDay in leaveDays) {
+        DateTime previousDay = leaveDay.subtract(const Duration(days: 1));
+
+        bool isStartOfLeaveBlock = !leaveDays.contains(
+            previousDay); // is current leaveDay the start of a leave block
+
+        if (isStartOfLeaveBlock &&
+            leaveDay.difference(date).inDays > 0 && // leaveDay is in the future
+            leaveDay.difference(date).inDays <
+                daysBeforeLastCall +
+                    1 && // leaveDay is within 3 days of this date
+            leaveDay.difference(date).inDays != 1) {
+          // date is not the day before leave starts
+          return false;
+        }
+      }
+    }
 
     // Check if the doctor is not assigned to another shift on the same date
     for (Shift shift in shifts) {
@@ -304,10 +341,12 @@ class Roster {
 
       // Create a Roster with the copies
       Roster tempRoster = Roster(
-          doctors: doctorsCopy,
-          shifts: shiftsCopy,
-          hoursPerShiftType: hoursPerShiftType,
-          maxOvertimeHours: maxOvertimeHours);
+        doctors: doctorsCopy,
+        shifts: shiftsCopy,
+        hoursPerShiftType: hoursPerShiftType,
+        maxOvertimeHours: maxOvertimeHours,
+        postCallBeforeLeave: postCallBeforeLeave,
+      );
 
       tempRoster.assignShifts();
 

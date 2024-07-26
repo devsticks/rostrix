@@ -14,6 +14,8 @@ class RosterHomePage extends StatefulWidget {
 }
 
 class RosterHomePageState extends State<RosterHomePage> {
+  final ValueNotifier<bool> _postCallBeforeLeaveValueNotifier =
+      ValueNotifier<bool>(true);
   List<Doctor> doctors = [];
   List<Shift> shifts = [];
   Map<String, double> hoursPerShiftType = {
@@ -26,12 +28,18 @@ class RosterHomePageState extends State<RosterHomePage> {
   };
   double maxOvertimeHours = 90;
   int year = 2024;
-  int month = 6;
+  int month = 7;
 
   @override
   void initState() {
     super.initState();
     _initializeDoctorsAndShifts();
+  }
+
+  @override
+  void dispose() {
+    _postCallBeforeLeaveValueNotifier.dispose();
+    super.dispose();
   }
 
   void _initializeDoctorsAndShifts() {
@@ -170,6 +178,7 @@ class RosterHomePageState extends State<RosterHomePage> {
       shifts: shifts,
       hoursPerShiftType: hoursPerShiftType,
       maxOvertimeHours: maxOvertimeHours,
+      postCallBeforeLeave: _postCallBeforeLeaveValueNotifier.value,
     );
     roster.retryAssignments(retries);
     setState(() {
@@ -187,7 +196,7 @@ class RosterHomePageState extends State<RosterHomePage> {
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: () {
-              _retryAssignments(10000);
+              _retryAssignments(1000);
             },
           ),
         ],
@@ -215,6 +224,8 @@ class RosterHomePageState extends State<RosterHomePage> {
                     doctors: doctors,
                     onAddLeave: _addLeaveDays,
                     onRemoveLeave: _removeLeaveBlock,
+                    postCallBeforeLeaveValueNotifier:
+                        _postCallBeforeLeaveValueNotifier,
                   ),
                 ),
               ],
