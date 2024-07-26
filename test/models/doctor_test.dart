@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:rostrem/models/doctor.dart';
 
 void main() {
@@ -265,9 +266,35 @@ void main() {
       doctor.leaveDays.add(DateTime(2024, 7, 8));
       expect(doctor.leaveDays[0].weekday, DateTime.monday);
       expect(
-          doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 7)), true);
-      expect(
-          doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 6)), true);
+          doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 5)), true);
+    });
+
+    test(
+        'Leave expansion includes weekend and Friday before a Monday, but excludes all other days (in month)',
+        () {
+      doctor.leaveDays.add(DateTime(2024, 7, 8));
+      expect(doctor.leaveDays[0].weekday, DateTime.monday);
+      expect(doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 5)), true,
+          reason:
+              'Friday ${DateTime(2024, 7, 5)} should be included in expansion of Monday ${DateTime(2024, 7, 8)}');
+      expect(doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 6)), true,
+          reason:
+              'Saturday ${DateTime(2024, 7, 6)} should be included in expansion of Monday ${DateTime(2024, 7, 8)}');
+      expect(doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 7)), true,
+          reason:
+              'Sunday ${DateTime(2024, 7, 7)} should be included in expansion of Monday ${DateTime(2024, 7, 8)}');
+      for (int i = 1; i < 5; i++) {
+        expect(
+            doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, i)), false,
+            reason:
+                'Day ${DateTime(2024, 7, i)} should not be included in expansion of Monday ${DateTime(2024, 7, 8)}');
+      }
+      for (int i = 9; i < 31; i++) {
+        expect(
+            doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, i)), false,
+            reason:
+                'Day ${DateTime(2024, 7, i)} should not be included in expansion of Monday ${DateTime(2024, 7, 8)}');
+      }
     });
 
     test('Leave expansion includes weekend after a Friday', () {
@@ -277,6 +304,41 @@ void main() {
           doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 6)), true);
       expect(
           doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 7)), true);
+    });
+
+    test('Leave expansion includes preceding weekday', () {
+      doctor.leaveDays.add(DateTime(2024, 7, 5));
+      expect(doctor.leaveDays[0].weekday, DateTime.friday);
+      expect(
+          doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 4)), true);
+    });
+
+    test(
+        'Leave expansion includes weekend after and Thursday before a Friday, but excludes all other days (in month)',
+        () {
+      doctor.leaveDays.add(DateTime(2024, 7, 5));
+      expect(doctor.leaveDays[0].weekday, DateTime.friday);
+      expect(doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 4)), true,
+          reason:
+              'Thursday ${DateTime(2024, 7, 4)} should be included in expansion of Friday ${DateTime(2024, 7, 5)}');
+      expect(doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 6)), true,
+          reason:
+              'Saturday ${DateTime(2024, 7, 6)} should be included in expansion of Friday ${DateTime(2024, 7, 5)}');
+      expect(doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, 7)), true,
+          reason:
+              'Sunday ${DateTime(2024, 7, 7)} should be included in expansion of Friday ${DateTime(2024, 7, 5)}');
+      for (int i = 1; i < 4; i++) {
+        expect(
+            doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, i)), false,
+            reason:
+                '${DateTime(2024, 7, i)} (${DateFormat('EEEE').format(DateTime(2024, 7, i))}) should not be included in expansion of Friday ${DateTime(2024, 7, 5)}');
+      }
+      for (int i = 9; i < 31; i++) {
+        expect(
+            doctor.getExpandedLeaveDays().contains(DateTime(2024, 7, i)), false,
+            reason:
+                '${DateTime(2024, 7, i)} (${DateFormat('EEEE').format(DateTime(2024, 7, i))}) should not be included in expansion of Friday ${DateTime(2024, 7, 5)}');
+      }
     });
 
     test(
