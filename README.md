@@ -1,3 +1,4 @@
+[![tests](https://github.com/devsticks/rostrem/actions/workflows/tests.yml/badge.svg)](https://github.com/devsticks/rostrem/actions/workflows/tests.yml) [![macos](https://github.com/devsticks/rostrem/actions/workflows/macos.yml/badge.svg)](https://github.com/devsticks/rostrem/actions/workflows/macos.yml)
 # Rostrem
 
 An automated doctors' roster builder, written in Flutter. For now, set up with the rules followed by Settlers Hospital in Makhanda, South Africa.
