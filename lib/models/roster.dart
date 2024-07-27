@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'dart:math';
 import 'doctor.dart';
 import 'shift.dart';
+import 'package:open_file/open_file.dart';
 
 class Roster {
   List<Doctor> doctors;
@@ -570,6 +571,28 @@ class Roster {
             content:
                 Text('The CSV file has been saved to: ${saveLocation.path}'),
             actions: <Widget>[
+              TextButton(
+                child: const Text('Open'),
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await OpenFile.open(saveLocation.path);
+                },
+              ),
+              TextButton(
+                child: const Text('Show Location'),
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  if (Platform.isWindows) {
+                    await Process.run(
+                        'explorer.exe', ['/select,', saveLocation.path]);
+                  } else if (Platform.isMacOS) {
+                    await Process.run('open', ['-R', saveLocation.path]);
+                  } else {
+                    // Fallback for other platforms if needed
+                    await OpenFile.open(saveLocation.path);
+                  }
+                },
+              ),
               TextButton(
                 child: const Text('OK'),
                 onPressed: () {
