@@ -10,10 +10,13 @@ void main() {
       (WidgetTester tester) async {
     await tester.pumpWidget(const MaterialApp(home: RosterHomePage()));
 
-    expect(find.text('Doctors Overtime Call Roster'), findsOneWidget);
-    expect(find.byType(RosterDisplay), findsOneWidget);
-    expect(find.byType(DoctorsSummaryTable), findsOneWidget);
-    expect(find.byType(LeaveManagement), findsOneWidget);
+    expect(find.text('Doctors\' Overtime Call Roster'), findsOneWidget);
+    expect(find.byType(RosterDisplay), findsOneWidget,
+        reason: 'RosterDisplay widget not found');
+    expect(find.byType(DoctorsSummaryTable), findsOneWidget,
+        reason: 'DoctorsSummaryTable widget not found');
+    expect(find.byType(LeaveManagement), findsOneWidget,
+        reason: 'LeaveManagement widget not found');
   });
 
   // Add more widget tests as needed

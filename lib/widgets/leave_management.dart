@@ -31,6 +31,59 @@ class _LeaveManagementState extends State<LeaveManagement> {
     _postCallBeforeLeave = widget.postCallBeforeLeaveValueNotifier.value;
   }
 
+  List<Widget> _buildFormElements() {
+    return [
+      DropdownButton<Doctor>(
+        isExpanded: true,
+        hint: const Text('Select Doctor'),
+        value: _selectedDoctor,
+        onChanged: (Doctor? newValue) {
+          setState(() {
+            _selectedDoctor = newValue;
+          });
+        },
+        items: widget.doctors.map((Doctor doctor) {
+          return DropdownMenuItem<Doctor>(
+            value: doctor,
+            child: Text(doctor.name),
+          );
+        }).toList(),
+      ),
+      TextField(
+        controller: _startDateController,
+        decoration: const InputDecoration(labelText: 'Start Date (yyyy-mm-dd)'),
+      ),
+      TextField(
+        controller: _endDateController,
+        decoration: const InputDecoration(labelText: 'End Date (yyyy-mm-dd)'),
+      ),
+      ElevatedButton(
+        onPressed: () {
+          if (_selectedDoctor != null &&
+              _startDateController.text.isNotEmpty &&
+              _endDateController.text.isNotEmpty) {
+            DateTime startDate = DateTime.parse(_startDateController.text);
+            DateTime endDate = DateTime.parse(_endDateController.text);
+            List<DateTime> leaveDays = [];
+            for (DateTime date = startDate;
+                date.isBefore(endDate) || date.isAtSameMomentAs(endDate);
+                date = date.add(const Duration(days: 1))) {
+              leaveDays.add(date);
+            }
+            widget.onAddLeave(_selectedDoctor!, leaveDays);
+            setState(() {
+              // Clear the selection and input fields
+              _selectedDoctor = null;
+              _startDateController.clear();
+              _endDateController.clear();
+            });
+          }
+        },
+        child: const Text('Add Leave'),
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -46,68 +99,22 @@ class _LeaveManagementState extends State<LeaveManagement> {
                     widget.postCallBeforeLeaveValueNotifier.value = value;
                   });
                 }),
-            const Text('Post-call the day before leave'),
+            const Expanded(child: Text('Post-call the day before leave')),
           ],
         ),
-        Row(
-          children: [
-            Expanded(
-              child: DropdownButton<Doctor>(
-                isExpanded: true,
-                hint: const Text('Select Doctor'),
-                value: _selectedDoctor,
-                onChanged: (Doctor? newValue) {
-                  setState(() {
-                    _selectedDoctor = newValue;
-                  });
-                },
-                items: widget.doctors.map((Doctor doctor) {
-                  return DropdownMenuItem<Doctor>(
-                    value: doctor,
-                    child: Text(doctor.name),
-                  );
-                }).toList(),
-              ),
-            ),
-            Expanded(
-              child: TextField(
-                controller: _startDateController,
-                decoration:
-                    const InputDecoration(labelText: 'Start Date (yyyy-mm-dd)'),
-              ),
-            ),
-            Expanded(
-              child: TextField(
-                controller: _endDateController,
-                decoration: const InputDecoration(labelText: 'End Date (yyyy-mm-dd)'),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (_selectedDoctor != null &&
-                    _startDateController.text.isNotEmpty &&
-                    _endDateController.text.isNotEmpty) {
-                  DateTime startDate =
-                      DateTime.parse(_startDateController.text);
-                  DateTime endDate = DateTime.parse(_endDateController.text);
-                  List<DateTime> leaveDays = [];
-                  for (DateTime date = startDate;
-                      date.isBefore(endDate) || date.isAtSameMomentAs(endDate);
-                      date = date.add(const Duration(days: 1))) {
-                    leaveDays.add(date);
-                  }
-                  widget.onAddLeave(_selectedDoctor!, leaveDays);
-                  setState(() {
-                    // Clear the selection and input fields
-                    _selectedDoctor = null;
-                    _startDateController.clear();
-                    _endDateController.clear();
-                  });
-                }
-              },
-              child: const Text('Add Leave'),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            var formElements = _buildFormElements();
+            if (constraints.maxWidth < 400) {
+              return Column(children: formElements);
+            } else {
+              return Row(
+                children: formElements
+                    .map((widget) => Expanded(child: widget))
+                    .toList(),
+              );
+            }
+          },
         ),
         Expanded(
           child: ListView(

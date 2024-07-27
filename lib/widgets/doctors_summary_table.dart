@@ -14,17 +14,35 @@ class DoctorsSummaryTable extends StatelessWidget {
       child: DataTable(
         columnSpacing: 10.0, // Adjust the column spacing as needed
         columns: const [
-          DataColumn(label: HeaderText(text: 'Doctor', width: 120)),
-          DataColumn(label: HeaderText(text: 'Overtime Hours', width: 80)),
           DataColumn(
-              label: HeaderText(text: 'Overnight Weekday Calls', width: 80)),
+              label:
+                  Expanded(child: Text('Doctor', textAlign: TextAlign.center))),
           DataColumn(
-              label: HeaderText(text: '2nd On Call Weekday Calls', width: 80)),
+              label: Expanded(
+                  child: Text('Overtime Hours', textAlign: TextAlign.center)),
+              numeric: true),
           DataColumn(
-              label: HeaderText(text: 'Caesar Cover Weekday Calls', width: 80)),
-          DataColumn(label: HeaderText(text: 'Weekend/PH Calls', width: 80)),
+              label: Expanded(
+                  child: Text('Weekday Overnight Calls',
+                      textAlign: TextAlign.center)),
+              numeric: true),
           DataColumn(
-              label: HeaderText(text: 'Caesar Cover Weekend Calls', width: 80)),
+              label: Expanded(
+                  child: Text('2nd On Call Weekday Calls',
+                      textAlign: TextAlign.center)),
+              numeric: true),
+          DataColumn(
+              label: Expanded(
+                  child: Text('CS Weekday Cover', textAlign: TextAlign.center)),
+              numeric: true),
+          DataColumn(
+              label: Expanded(
+                  child: Text('Weekend/PH Calls', textAlign: TextAlign.center)),
+              numeric: true),
+          DataColumn(
+              label: Expanded(
+                  child: Text('CS Weekend Cover', textAlign: TextAlign.center)),
+              numeric: true),
         ],
         rows: doctors.map((doctor) {
           return DataRow(cells: [
