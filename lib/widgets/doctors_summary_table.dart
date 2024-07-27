@@ -29,7 +29,7 @@ class DoctorsSummaryTable extends StatelessWidget {
         rows: doctors.map((doctor) {
           return DataRow(cells: [
             DataCell(Text(doctor.name)),
-            DataCell(Text(doctor.overtimeHours.toString())),
+            DataCell(Text(doctor.overtimeHours.toStringAsFixed(1))),
             DataCell(Text(doctor.overnightWeekdayCalls.toString())),
             DataCell(Text(doctor.secondOnCallWeekdayCalls.toString())),
             DataCell(Text(doctor.caesarCoverWeekdayCalls.toString())),

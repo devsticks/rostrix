@@ -316,13 +316,18 @@ class Roster {
     doctor.leaveDays.addAll(leaveDays);
   }
 
-  void retryAssignments(int retries) {
+  Future<void> retryAssignments(
+      int retries, ValueNotifier<double> progressNotifier) async {
     List<Doctor> bestDoctors = [];
     List<Shift> bestShifts = [];
     double bestScore = double.infinity;
     int validRostersFound = 0;
 
     for (int i = 0; i < retries; i++) {
+      // Update progress
+      progressNotifier.value = (i + 1) / retries;
+      await Future.delayed(Duration(milliseconds: 1));
+
       // Create deep copies of the doctors and shifts for each retry
       List<Doctor> doctorsCopy = doctors
           .map((d) => Doctor(

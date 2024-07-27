@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rostrem/widgets/loading_overlay.dart';
 import '../models/doctor.dart';
 import '../models/shift.dart';
 import '../models/roster.dart';
@@ -14,8 +15,11 @@ class RosterHomePage extends StatefulWidget {
 }
 
 class RosterHomePageState extends State<RosterHomePage> {
+  bool _isLoading = false;
+  final ValueNotifier<double> _progressNotifier = ValueNotifier<double>(0.0);
   final ValueNotifier<bool> _postCallBeforeLeaveValueNotifier =
       ValueNotifier<bool>(true);
+  OverlayEntry? _overlayEntry;
   List<Doctor> doctors = [];
   List<Shift> shifts = [];
   late Roster roster;
@@ -29,10 +33,45 @@ class RosterHomePageState extends State<RosterHomePage> {
   };
   double maxOvertimeHours = 90;
   // year and month for next month
-  // int year = DateTime.now().add(const Duration(days: 31)).year;
-  // int month = DateTime.now().add(const Duration(days: 31)).month;
-  int year = 2024;
-  int month = 9;
+  int year = DateTime.now().add(const Duration(days: 31)).year;
+  int month = DateTime.now().add(const Duration(days: 31)).month;
+
+  final List<String> _loadingMessages = [
+    'Preparing your new roster...',
+    'Crunching the numbers...',
+    'Finding the best schedule...',
+    'Almost there...',
+    'Consulting the interns...',
+    'It\'ll be over before the morning...',
+    'Continuing management...',
+    'Prescribing the perfect shift...',
+    'Just a few more stitches...',
+    'Making rounds on the schedule...',
+    'Analyzing lab results for the best fit...',
+    'Diagnosing scheduling conflicts...',
+    'Taking a break for a coffee refill...',
+    'Preparing the night shift...',
+    'Titrating time off...',
+    'Treating the roster with care...',
+    'Checking the vitals of your schedule...',
+    'Administering the final adjustments...',
+    'Balancing leave requests...',
+    'Operating on the shifts...',
+    'Getting it onto the table...',
+    'Scrubbing in for the final checks...',
+    'Coordinating with the surgical team...',
+    'Charting the best course for your team...',
+    'Scheduling a healthy work-life balance...',
+    'Paging Dr. Schedule...',
+    'Adjusting the dosage of hours...',
+    'Finding the pulse of the perfect schedule...',
+    'Monitoring shift requests...',
+    'Consulting the duty roster...',
+    'Preparing for shift change...',
+    'A healthy dose of shifts coming up...',
+    'Fine-tuning the treatment plan...',
+    'Putting POP on the changes...',
+  ];
 
   @override
   void initState() {
@@ -175,12 +214,35 @@ class RosterHomePageState extends State<RosterHomePage> {
     });
   }
 
-  void _retryAssignments(int retries) {
-    roster.retryAssignments(retries);
+  OverlayEntry _createOverlayEntry() {
+    return OverlayEntry(
+      builder: (context) => Material(
+        color: Colors.transparent,
+        child: LoadingOverlay(
+          progressNotifier: _progressNotifier,
+          messages: _loadingMessages,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _retryAssignments(int retries) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    _progressNotifier.value = 0.0;
+    _overlayEntry = _createOverlayEntry();
+    Overlay.of(context)?.insert(_overlayEntry!);
+    await roster.retryAssignments(retries, _progressNotifier);
+
     setState(() {
       doctors = roster.doctors;
       shifts = roster.shifts;
+      _isLoading = false;
     });
+
+    _overlayEntry?.remove();
   }
 
   @override
@@ -226,35 +288,39 @@ class RosterHomePageState extends State<RosterHomePage> {
           ),
         ],
       ),
-      body: Row(
+      body: Stack(
         children: [
-          Expanded(
-            flex: 1,
-            child: RosterDisplay(
-              shifts: shifts,
-              isPublicHoliday: _isPublicHoliday,
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Column(
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: DoctorsSummaryTable(doctors: doctors),
+          Row(
+            children: [
+              Expanded(
+                flex: 1,
+                child: RosterDisplay(
+                  shifts: shifts,
+                  isPublicHoliday: _isPublicHoliday,
                 ),
-                Expanded(
-                  flex: 1,
-                  child: LeaveManagement(
-                    doctors: doctors,
-                    onAddLeave: _addLeaveDays,
-                    onRemoveLeave: _removeLeaveBlock,
-                    postCallBeforeLeaveValueNotifier:
-                        _postCallBeforeLeaveValueNotifier,
-                  ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Column(
+                  children: [
+                    Expanded(
+                      flex: 1,
+                      child: DoctorsSummaryTable(doctors: doctors),
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: LeaveManagement(
+                        doctors: doctors,
+                        onAddLeave: _addLeaveDays,
+                        onRemoveLeave: _removeLeaveBlock,
+                        postCallBeforeLeaveValueNotifier:
+                            _postCallBeforeLeaveValueNotifier,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
