@@ -18,6 +18,7 @@ class RosterHomePageState extends State<RosterHomePage> {
       ValueNotifier<bool>(true);
   List<Doctor> doctors = [];
   List<Shift> shifts = [];
+  late Roster roster;
   Map<String, double> hoursPerShiftType = {
     'Overnight Weekday': 16,
     'Second On Call Weekday': 6,
@@ -36,7 +37,9 @@ class RosterHomePageState extends State<RosterHomePage> {
   @override
   void initState() {
     super.initState();
-    _initializeDoctorsAndShifts();
+    _initializeDoctors();
+    _initializeShifts();
+    _initializeRoster();
   }
 
   @override
@@ -45,7 +48,7 @@ class RosterHomePageState extends State<RosterHomePage> {
     super.dispose();
   }
 
-  void _initializeDoctorsAndShifts() {
+  void _initializeDoctors() {
     // Initialize doctors
     doctors = [
       Doctor(
@@ -93,9 +96,6 @@ class RosterHomePageState extends State<RosterHomePage> {
           canPerformCaesars: false,
           canPerformAnaesthetics: true),
     ];
-
-    // Initialize shifts for the selected month
-    _initializeShifts();
   }
 
   void _initializeShifts() {
@@ -115,6 +115,17 @@ class RosterHomePageState extends State<RosterHomePage> {
 
       shifts.add(Shift(date: date, type: type));
     }
+  }
+
+  void _initializeRoster() {
+    roster = Roster(
+      doctors: doctors,
+      shifts: shifts,
+      hoursPerShiftType: hoursPerShiftType,
+      maxOvertimeHours: maxOvertimeHours,
+      postCallBeforeLeave: _postCallBeforeLeaveValueNotifier.value,
+    );
+    roster.assignShifts();
   }
 
   bool _isPublicHoliday(DateTime date) {
@@ -147,17 +158,6 @@ class RosterHomePageState extends State<RosterHomePage> {
     return publicHolidays;
   }
 
-  void _assignShifts() {
-    Roster roster = Roster(
-      doctors: doctors,
-      shifts: shifts,
-      hoursPerShiftType: hoursPerShiftType,
-      maxOvertimeHours: maxOvertimeHours,
-    );
-    roster.assignShifts();
-    setState(() {});
-  }
-
   void _addLeaveDays(Doctor doctor, List<DateTime> leaveDays) {
     setState(() {
       for (DateTime leaveDay in leaveDays) {
@@ -176,13 +176,6 @@ class RosterHomePageState extends State<RosterHomePage> {
   }
 
   void _retryAssignments(int retries) {
-    Roster roster = Roster(
-      doctors: doctors,
-      shifts: shifts,
-      hoursPerShiftType: hoursPerShiftType,
-      maxOvertimeHours: maxOvertimeHours,
-      postCallBeforeLeave: _postCallBeforeLeaveValueNotifier.value,
-    );
     roster.retryAssignments(retries);
     setState(() {
       doctors = roster.doctors;
@@ -194,13 +187,13 @@ class RosterHomePageState extends State<RosterHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Doctors\' Overtime Call Roster'),
+        title: const Text('Doctors\' Overtime Call Roster'),
         actions: [
           // Input for the year and month
           Row(
             children: [
-              Text('Year: '),
-              Container(
+              const Text('Year: '),
+              SizedBox(
                 width: 60,
                 child: TextField(
                   controller: TextEditingController(text: year.toString()),
@@ -211,8 +204,8 @@ class RosterHomePageState extends State<RosterHomePage> {
                   },
                 ),
               ),
-              Text('Month: '),
-              Container(
+              const Text('Month: '),
+              SizedBox(
                 width: 60,
                 child: TextField(
                   controller: TextEditingController(text: month.toString()),
@@ -226,7 +219,7 @@ class RosterHomePageState extends State<RosterHomePage> {
             ],
           ),
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh),
             onPressed: () {
               _retryAssignments(1000);
             },
@@ -266,9 +259,9 @@ class RosterHomePageState extends State<RosterHomePage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
+        child: const Icon(Icons.download),
         onPressed: () {
-          // Navigate to a page to add doctors or leave days
+          roster.downloadAsCsv(context);
         },
       ),
     );

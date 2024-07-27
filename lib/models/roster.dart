@@ -1,3 +1,7 @@
+import 'package:file_selector/file_selector.dart';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'dart:math';
 import 'doctor.dart';
 import 'shift.dart';
@@ -88,7 +92,7 @@ class Roster {
   }
 
   void _assignHolidayOrWeekendShift(Shift shift) {
-    DateTime nextDay = shift.date.add(Duration(days: 1));
+    DateTime nextDay = shift.date.add(const Duration(days: 1));
     bool isWeekendPair = (shift.date.weekday == DateTime.saturday) &&
         nextDay.weekday == DateTime.sunday;
 
@@ -259,7 +263,7 @@ class Roster {
     }
 
     // Check if the doctor is not on call the previous night unless it's a weekend
-    DateTime prevDate = date.subtract(Duration(days: 1));
+    DateTime prevDate = date.subtract(const Duration(days: 1));
     // if (role != 'day') {
     for (Shift shift in shifts) {
       if (shift.date == prevDate &&
@@ -368,7 +372,7 @@ class Roster {
       print('No valid roster permutations found in $retries tries');
     } else {
       if (validRostersFound / retries < 0.1) {
-        print('< 10\% of roster permutations were valid');
+        print('< 10% of roster permutations were valid');
       }
       doctors = bestDoctors;
       shifts = bestShifts;
@@ -502,5 +506,99 @@ class Roster {
         weekdayCaesarCoverVarianceWeight * weekdayCaesarCoverVariance +
         weekdaySecondOnCallVarianceWeight * weekdaySecondOnCallVariance +
         callSpreadWeight * callSpread;
+  }
+
+  Future<void> downloadAsCsv(BuildContext context) async {
+    String csv = 'Roster - ${DateFormat('MMM yyyy').format(shifts[0].date)}\n';
+    csv += 'Date,Day/Eve (2nd-on-call),Night,CS Cover,Leave\n';
+    for (Shift shift in shifts) {
+      String mainDoctor =
+          shift.mainDoctor != null ? shift.mainDoctor!.name : '';
+      String caesarCoverDoctor =
+          shift.caesarCoverDoctor != null ? shift.caesarCoverDoctor!.name : '';
+      String secondOnCallDoctor = shift.secondOnCallDoctor != null
+          ? shift.secondOnCallDoctor!.name
+          : '';
+      String weekendDayDoctor = shift.weekendDayDoctor != null
+          ? '; ${shift.weekendDayDoctor!.name}'
+          : '';
+      String leaveDoctors = doctors
+          .where((doctor) => doctor.leaveDays.contains(shift.date))
+          .map((doctor) => doctor.name)
+          .join('; ');
+      csv +=
+          '${DateFormat('EEEE yyyy-MM-dd').format(shift.date)},$secondOnCallDoctor$weekendDayDoctor,$mainDoctor,$caesarCoverDoctor,$leaveDoctors\n';
+    }
+
+    csv += '\nSummary\n';
+    csv +=
+        'Doctor,Total Hours,Weekend / PH,Weekday,2nd On Call (Wk),CS Covers (Wk),CS Covers (Wkend/PH)\n';
+    for (Doctor doctor in doctors) {
+      csv +=
+          '${doctor.name},${doctor.overtimeHours.toStringAsFixed(1)},${doctor.weekendCalls.toStringAsFixed(1)},${doctor.overnightWeekdayCalls.toStringAsFixed(1)},${doctor.secondOnCallWeekdayCalls.toStringAsFixed(1)},${doctor.caesarCoverWeekdayCalls.toStringAsFixed(1)},${doctor.caesarCoverWeekendCalls.toStringAsFixed(1)}\n';
+    }
+
+    const XTypeGroup typeGroup = XTypeGroup(
+      label: 'csv',
+      extensions: ['csv'],
+    );
+
+    final FileSaveLocation? saveLocation = await getSaveLocation(
+      acceptedTypeGroups: [typeGroup],
+      suggestedName:
+          'Roster ${DateFormat('yyyy-MM').format(shifts[0].date)}.csv',
+    );
+
+    if (saveLocation == null) {
+      // nothing selected
+      return;
+    }
+
+    try {
+      final file = File(saveLocation.path);
+      await file.writeAsString(csv);
+
+      // Inform the user that the file has been saved
+      print('CSV file saved to: ${saveLocation.path}');
+
+      // Optionally, show a dialog to inform the user
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('CSV Exported'),
+            content:
+                Text('The CSV file has been saved to: ${saveLocation.path}'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      print('Error saving CSV file: $e');
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: const Text('Failed to save the CSV file.'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 }

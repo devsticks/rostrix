@@ -73,13 +73,13 @@ class _LeaveManagementState extends State<LeaveManagement> {
               child: TextField(
                 controller: _startDateController,
                 decoration:
-                    InputDecoration(labelText: 'Start Date (yyyy-mm-dd)'),
+                    const InputDecoration(labelText: 'Start Date (yyyy-mm-dd)'),
               ),
             ),
             Expanded(
               child: TextField(
                 controller: _endDateController,
-                decoration: InputDecoration(labelText: 'End Date (yyyy-mm-dd)'),
+                decoration: const InputDecoration(labelText: 'End Date (yyyy-mm-dd)'),
               ),
             ),
             ElevatedButton(
@@ -93,7 +93,7 @@ class _LeaveManagementState extends State<LeaveManagement> {
                   List<DateTime> leaveDays = [];
                   for (DateTime date = startDate;
                       date.isBefore(endDate) || date.isAtSameMomentAs(endDate);
-                      date = date.add(Duration(days: 1))) {
+                      date = date.add(const Duration(days: 1))) {
                     leaveDays.add(date);
                   }
                   widget.onAddLeave(_selectedDoctor!, leaveDays);
@@ -105,7 +105,7 @@ class _LeaveManagementState extends State<LeaveManagement> {
                   });
                 }
               },
-              child: Text('Add Leave'),
+              child: const Text('Add Leave'),
             ),
           ],
         ),
@@ -121,7 +121,7 @@ class _LeaveManagementState extends State<LeaveManagement> {
                   title: Text(
                       '${doctor.name}: ${startDate.toIso8601String().split('T')[0]} - ${endDate.toIso8601String().split('T')[0]}'),
                   trailing: IconButton(
-                    icon: Icon(Icons.delete),
+                    icon: const Icon(Icons.delete),
                     onPressed: () {
                       widget.onRemoveLeave(doctor, block);
                     },

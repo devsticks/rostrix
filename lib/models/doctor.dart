@@ -85,13 +85,13 @@ class Doctor {
       expandedDays.add(day);
 
       // Check and add preceding weekend / holiday days
-      DateTime current = day.subtract(Duration(days: 1));
+      DateTime current = day.subtract(const Duration(days: 1));
       while (current.weekday == DateTime.sunday ||
           current.weekday == DateTime.saturday ||
           current.weekday == DateTime.friday ||
           isPublicHoliday(current)) {
         expandedDays.add(current);
-        current = current.subtract(Duration(days: 1));
+        current = current.subtract(const Duration(days: 1));
       }
 
       // Add preceding weekday
@@ -102,12 +102,12 @@ class Doctor {
       }
 
       // Check and add following days
-      current = day.add(Duration(days: 1));
+      current = day.add(const Duration(days: 1));
       while (current.weekday == DateTime.saturday ||
           current.weekday == DateTime.sunday ||
           isPublicHoliday(current)) {
         expandedDays.add(current);
-        current = current.add(Duration(days: 1));
+        current = current.add(const Duration(days: 1));
       }
     }
 
