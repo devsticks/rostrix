@@ -54,11 +54,11 @@ class Roster {
   }
 
   void _assignWeekdayShift(Shift shift) {
-    Doctor? mainDoctor = _findAvailableDoctor('main', shift.date);
+    Doctor? mainDoctor = _getAvailableDoctors('main', shift.date)?.first;
     Doctor? caesarCoverDoctor =
-        _findAvailableDoctor('caesarCover', shift.date, [mainDoctor]);
+        _getAvailableDoctors('caesarCover', shift.date, [mainDoctor])?.first;
     Doctor? secondOnCallDoctor =
-        _findAvailableDoctor('secondOnCall', shift.date, [mainDoctor]);
+        _getAvailableDoctors('secondOnCall', shift.date, [mainDoctor])?.first;
 
     if (mainDoctor != null &&
         caesarCoverDoctor != null &&
@@ -102,11 +102,11 @@ class Roster {
 
     List<Doctor> dayShiftDoctors =
         _findAvailableDoctorsForDayShift(shift.date, nextDay);
-    Doctor? nightShiftDoctor = _findAvailableDoctor('night', shift.date, [
+    Doctor? nightShiftDoctor = _getAvailableDoctors('night', shift.date, [
       ...dayShiftDoctors,
-    ]);
-    Doctor? caesarCoverDoctor = _findAvailableDoctor('caesarCover', shift.date,
-        [nightShiftDoctor, dayShiftDoctors[0], dayShiftDoctors[1]]);
+    ])?.first;
+    Doctor? caesarCoverDoctor = _getAvailableDoctors('caesarCover', shift.date,
+        [nightShiftDoctor, dayShiftDoctors[0], dayShiftDoctors[1]])?.first;
 
     if (dayShiftDoctors.length == 2 &&
         nightShiftDoctor != null &&
@@ -166,7 +166,7 @@ class Roster {
     }
   }
 
-  Doctor? _findAvailableDoctor(String role, DateTime date,
+  List<Doctor>? _getAvailableDoctors(String role, DateTime date,
       [List<Doctor?>? avoidDoctors]) {
     List<Doctor> availableDoctors = doctors.where((doctor) {
       return _isDoctorAvailable(doctor, role, date, avoidDoctors);
@@ -195,7 +195,7 @@ class Roster {
       });
     }
 
-    return availableDoctors.first;
+    return availableDoctors;
   }
 
   List<Doctor> _findAvailableDoctorsForDayShift(DateTime date,

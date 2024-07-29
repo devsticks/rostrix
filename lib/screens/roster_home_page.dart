@@ -15,7 +15,6 @@ class RosterHomePage extends StatefulWidget {
 }
 
 class RosterHomePageState extends State<RosterHomePage> {
-  bool _isLoading = false;
   final ValueNotifier<double> _progressNotifier = ValueNotifier<double>(0.0);
   final ValueNotifier<bool> _postCallBeforeLeaveValueNotifier =
       ValueNotifier<bool>(true);
@@ -227,19 +226,14 @@ class RosterHomePageState extends State<RosterHomePage> {
   }
 
   Future<void> _retryAssignments(int retries) async {
-    setState(() {
-      _isLoading = true;
-    });
-
     _progressNotifier.value = 0.0;
     _overlayEntry = _createOverlayEntry();
-    Overlay.of(context)?.insert(_overlayEntry!);
+    Overlay.of(context).insert(_overlayEntry!);
     await roster.retryAssignments(retries, _progressNotifier);
 
     setState(() {
       doctors = roster.doctors;
       shifts = roster.shifts;
-      _isLoading = false;
     });
 
     _overlayEntry?.remove();

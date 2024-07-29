@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/doctor.dart';
-import 'header_text.dart'; // Import the custom header widget
 
 class DoctorsSummaryTable extends StatelessWidget {
   final List<Doctor> doctors;
