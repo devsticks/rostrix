@@ -241,6 +241,13 @@ void main() {
       expect(copiedShift.weekendDayDoctor, doctor4);
     });
 
+    test('Copied shift can be compared', () {
+      final date = DateTime(2024, 6, 1);
+      final shift = Shift(date: date, type: 'Weekday');
+      final copiedShift = shift.copy();
+      expect(shift == copiedShift, true);
+    });
+
     test('Shift can be compared', () {
       final date = DateTime(2024, 6, 1);
       final doctor1 = Doctor(

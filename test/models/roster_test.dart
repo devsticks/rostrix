@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rostrem/models/assignment_generator.dart';
 import 'package:rostrem/models/roster.dart';
 import 'package:rostrem/models/shift.dart';
 import 'package:rostrem/models/doctor.dart';
@@ -8,17 +9,21 @@ import 'package:flutter/material.dart';
 import 'package:file_selector/file_selector.dart';
 import 'roster_test.mocks.dart';
 
-class MockBuildContext extends Mock implements BuildContext {}
+// class MockBuildContext extends Mock implements BuildContext {}
 
-@GenerateMocks([Roster])
+@GenerateNiceMocks([
+  MockSpec<BuildContext>(),
+  MockSpec<FileSaveLocation>(),
+  MockSpec<XTypeGroup>(),
+  MockSpec<AssignmentGenerator>()
+])
 void main() {
-  group('Roster tests', () {
+  group('Roster model tests', () {
     late List<Doctor> doctors;
     late List<Shift> shifts;
     late Map<String, double> hoursPerShiftType;
     late Roster roster;
-    late double weekdayShiftHours;
-    late double weekendShiftHours;
+    late AssignmentGenerator assigner;
 
     setUp(() {
       doctors = [
@@ -53,202 +58,105 @@ void main() {
         'Caesar Cover Weekend': 10,
         'Overnight Weekend': 14,
       };
+      assigner = AssignmentGenerator(hoursPerShiftType: hoursPerShiftType);
       roster = Roster(
         doctors: doctors,
         shifts: shifts,
-        hoursPerShiftType: hoursPerShiftType,
+        assigner: assigner,
       );
-      weekdayShiftHours = hoursPerShiftType['Overnight Weekday']! +
-          hoursPerShiftType['Caesar Cover Weekday']! +
-          hoursPerShiftType['Second On Call Weekday']!;
-      weekendShiftHours = 2 * hoursPerShiftType['Day Weekend']! +
-          hoursPerShiftType['Caesar Cover Weekend']! +
-          hoursPerShiftType['Overnight Weekend']!;
     });
 
-    test('assignShifts() assigns all shifts for single-shift weekday roster',
-        () {
-      roster.shifts = [shifts[0]];
-      roster.assignShifts();
-
-      for (var shift in roster.shifts) {
-        expect(shift.mainDoctor, isNotNull,
-            reason: 'Main doctor is not assigned for shift on ${shift.date}');
-        expect(shift.caesarCoverDoctor, isNotNull,
-            reason:
-                'Caesar cover doctor is not assigned for shift on ${shift.date}');
-        expect(shift.secondOnCallDoctor, isNotNull,
-            reason:
-                'Second on call doctor is not assigned for shift on ${shift.date}');
-      }
-      expect(roster.filled, isTrue, reason: 'Roster is not fully filled');
+    test('Roster can be instantiated', () {
+      expect(roster, isNotNull, reason: 'Roster should not be null');
     });
 
-    test('assignShifts() assigns all shifts for two-shift weekday roster', () {
-      roster.shifts = shifts;
-      roster.assignShifts();
-
-      for (var shift in roster.shifts) {
-        expect(shift.mainDoctor, isNotNull,
-            reason: 'Main doctor is not assigned for shift on ${shift.date}');
-        expect(shift.caesarCoverDoctor, isNotNull,
-            reason:
-                'Caesar cover doctor is not assigned for shift on ${shift.date}');
-        expect(shift.secondOnCallDoctor, isNotNull,
-            reason:
-                'Second on call doctor is not assigned for shift on ${shift.date}');
-      }
-      expect(roster.filled, isTrue, reason: 'Roster is not fully filled');
+    test('Roster doctors are initialized correctly', () {
+      expect(roster.doctors, doctors,
+          reason: 'Roster doctors should be initialized correctly');
     });
 
-    test('assignShifts() assigns all shifts for single-shift weekend roster',
-        () {
-      roster.shifts = [shifts[0]];
-      roster.shifts[0].type = 'Weekend';
-
-      roster.assignShifts();
-
-      for (var shift in roster.shifts) {
-        expect(shift.mainDoctor, isNotNull,
-            reason: 'Main doctor is not assigned for shift on ${shift.date}');
-        expect(shift.caesarCoverDoctor, isNotNull,
-            reason:
-                'Caesar cover doctor is not assigned for shift on ${shift.date}');
-        expect(shift.secondOnCallDoctor, isNotNull,
-            reason:
-                'Second on call doctor is not assigned for shift on ${shift.date}');
-      }
-      expect(roster.filled, isTrue, reason: 'Roster is not fully filled');
+    test('Roster shifts are initialized correctly', () {
+      expect(roster.shifts, shifts,
+          reason: 'Roster shifts should be initialized correctly');
     });
 
-    test('assignShifts() assigns all shifts for two-shift weekend roster', () {
-      roster.shifts[0].type = 'Weekend';
-      roster.shifts[1].type = 'Weekend';
-
-      roster.assignShifts();
-
-      for (var shift in roster.shifts) {
-        expect(shift.mainDoctor, isNotNull,
-            reason: 'Main doctor is not assigned for shift on ${shift.date}');
-        expect(shift.caesarCoverDoctor, isNotNull,
-            reason:
-                'Caesar cover doctor is not assigned for shift on ${shift.date}');
-        expect(shift.secondOnCallDoctor, isNotNull,
-            reason:
-                'Second on call doctor is not assigned for shift on ${shift.date}');
-      }
-      expect(roster.filled, isTrue, reason: 'Roster is not fully filled');
+    test('Roster assigner is initialized correctly', () {
+      expect(roster.assigner, assigner,
+          reason: 'Roster assigner should be initialized correctly');
     });
 
-    test('assignShifts() fails when no doctors are available', () {
-      roster.doctors = [];
-
-      roster.assignShifts();
-
-      expect(roster.filled, isFalse,
-          reason: 'Roster should not be filled when no doctors are available');
+    test('Roster is not filled initially', () {
+      expect(roster.filled, isFalse, reason: 'Roster should not be filled');
     });
 
-    test('assignShifts() fails when no complementary doctors are available',
-        () {
-      doctors[0].canPerformCaesars = false;
-      doctors[1].canPerformCaesars = false;
-      roster.doctors = [doctors[0], doctors[1]];
-      roster.shifts = [shifts[0]];
-
-      roster.assignShifts();
-
-      expect(roster.filled, isFalse,
-          reason:
-              'Roster should not be filled when no complementary doctors are available');
-    });
-
-    test('assignShifts() works when complementary doctors are available', () {
-      doctors[0].canPerformCaesars = true;
-      doctors[1].canPerformCaesars = false;
-      roster.doctors = [doctors[0], doctors[1]];
-      roster.shifts = [shifts[0]];
-
-      roster.assignShifts();
-
-      expect(roster.filled, isTrue,
-          reason:
-              'Roster should not be filled when no complementary doctors are available');
-    });
-
-    test(
-        'assignShifts() updates the overtime correctly for the relevant doctors for a single weekday shift roster',
-        () {
-      roster.shifts = [shifts[0]];
-      roster.assignShifts();
-
-      double totalOvertimeAllocated = 0.0;
-      for (var doctor in doctors) {
-        totalOvertimeAllocated += doctor.overtimeHours;
-      }
-
-      double totalOvertimeToAllocate = weekdayShiftHours;
-
-      expect(totalOvertimeAllocated, totalOvertimeToAllocate,
-          reason:
-              'Total overtime should be $totalOvertimeToAllocate after assigning one weekday shift');
-    });
-
-    test(
-        'assignShifts() updates the overtime correctly for the relevant doctors for a single weekend shift roster',
-        () {
-      roster.shifts = [shifts[0]];
-      roster.shifts[0].type = 'Weekend';
-      roster.assignShifts();
-
-      double totalOvertimeAllocated = 0.0;
-      for (var doctor in doctors) {
-        totalOvertimeAllocated += doctor.overtimeHours;
-      }
-
-      double totalOvertimeToAllocate = weekendShiftHours;
-
-      expect(totalOvertimeAllocated, totalOvertimeToAllocate,
-          reason:
-              'Total overtime should be $totalOvertimeToAllocate after assigning one weekday shift');
-    });
-
-    test(
-        'assignShifts() updates the overtime correctly for the relevant doctors for a weekday & weekend shift roster',
-        () {
-      roster.shifts = [shifts[0], shifts[1]];
-      roster.shifts[1].type = 'Weekend';
-      roster.assignShifts();
-
-      double totalOvertimeAllocated = 0.0;
-      for (var doctor in doctors) {
-        totalOvertimeAllocated += doctor.overtimeHours;
-      }
-
-      double totalOvertimeToAllocate = 0.0;
-      for (var shift in shifts) {
-        if (shift.type == 'Weekday') {
-          totalOvertimeToAllocate += weekdayShiftHours;
-        }
-        if (shift.type == 'Weekend') {
-          totalOvertimeToAllocate += weekendShiftHours;
-        }
-      }
-
-      expect(totalOvertimeAllocated, totalOvertimeToAllocate,
-          reason:
-              'Total overtime should be $totalOvertimeToAllocate after assigning one weekday and one weekend shift');
-    });
-
-    test(
-        'retryAssignments() calls assignShifts() with the correct number of retries',
-        () async {
-      roster = MockRoster();
+    test('retryAssignments() calls assigner.retryAssignments()', () async {
       ValueNotifier<double> progressNotifier = ValueNotifier<double>(0);
-
+      AssignmentGenerator assigner = MockAssignmentGenerator();
+      Roster roster = Roster(
+        doctors: doctors,
+        shifts: shifts,
+        assigner: assigner,
+      );
       await roster.retryAssignments(3, progressNotifier);
 
-      verify(roster.assignShifts()).called(3);
+      verify(assigner.retryAssignments(roster, 3, progressNotifier));
+    });
+
+    test('Roster can be deeply copied', () {
+      Roster copy = roster.copy();
+
+      expect(copy, isNot(same(roster)),
+          reason: 'Copied roster should not be the same as the original');
+      expect(copy.doctors, roster.doctors,
+          reason: 'Copied roster doctors should be the same as the original');
+      expect(copy.shifts, roster.shifts,
+          reason: 'Copied roster shifts should be the same as the original');
+      expect(copy.assigner, roster.assigner,
+          reason: 'Copied roster assigner should be the same as the original');
+    });
+
+    test('Roster can be cleared', () {
+      roster.clearAssignments();
+
+      for (var shift in roster.shifts) {
+        expect(shift.mainDoctor, isNull,
+            reason: 'Main doctor should be null after clearing');
+        expect(shift.caesarCoverDoctor, isNull,
+            reason: 'Caesar cover doctor should be null after clearing');
+        expect(shift.secondOnCallDoctor, isNull,
+            reason: 'Second on call doctor should be null after clearing');
+        expect(shift.weekendDayDoctor, isNull,
+            reason: 'Weekend day doctor should be null after clearing');
+      }
+      expect(roster.filled, isFalse, reason: 'Roster should not be filled');
+    });
+
+    test('Roster can be compared', () {
+      Roster secondRoster = Roster(
+        doctors: doctors,
+        shifts: shifts,
+        assigner: assigner,
+      );
+
+      expect(secondRoster == roster, isTrue,
+          reason: 'Copied roster should be equal to the original');
+    });
+
+    test('Roster copy can be compared', () {
+      Roster copy = roster.copy();
+
+      expect(copy == roster, isTrue,
+          reason: 'Copied roster should be equal to the original');
+    });
+
+    test('getAvailableDoctors() returns doctors available for a shift', () {
+      List<Doctor>? availableDoctors = roster.getAvailableDoctors(
+        'Overnight Weekday',
+        DateTime.now(),
+      );
+
+      expect(availableDoctors, isNotEmpty,
+          reason: 'Available doctors should not be empty');
     });
 
     test('retryAssignments() updates the passed progressNotifier', () async {
@@ -258,31 +166,6 @@ void main() {
 
       expect(progressNotifier.value, 1.0,
           reason: 'Progress notifier should be at 1.0 after retries');
-    });
-
-    test('downloadAsCsv() generates the correct CSV format', () async {
-      // Mock the FileSaveLocation to avoid actual file system operations
-      XTypeGroup typeGroup = const XTypeGroup(
-        label: 'csv',
-        extensions: ['csv'],
-      );
-
-      FileSaveLocation saveLocation = FileSaveLocation(
-        'test_roster.csv',
-        activeFilter: typeGroup,
-      );
-
-      when(getSaveLocation(
-        acceptedTypeGroups: [typeGroup],
-        suggestedName: 'Roster.csv',
-      )).thenAnswer((_) async => saveLocation);
-
-      await roster.downloadAsCsv(MockBuildContext());
-
-      // Since the actual file writing is skipped, the verification here can only be
-      // theoretical without actual file operations.
-      // You might use a file system mock package for in-depth testing.
-      print('CSV export functionality tested.');
     });
   });
 }

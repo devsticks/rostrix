@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 class Doctor {
   String name;
   bool canPerformCaesars;
@@ -52,7 +54,7 @@ class Doctor {
           caesarCoverWeekdayCalls == other.caesarCoverWeekdayCalls &&
           weekendCalls == other.weekendCalls &&
           caesarCoverWeekendCalls == other.caesarCoverWeekendCalls &&
-          _listEquals(leaveDays, other.leaveDays);
+          const DeepCollectionEquality().equals(leaveDays, other.leaveDays);
 
   @override
   int get hashCode =>
@@ -65,15 +67,7 @@ class Doctor {
       caesarCoverWeekdayCalls.hashCode ^
       weekendCalls.hashCode ^
       caesarCoverWeekendCalls.hashCode ^
-      leaveDays.hashCode;
-
-  bool _listEquals(List<DateTime> list1, List<DateTime> list2) {
-    if (list1.length != list2.length) return false;
-    for (int i = 0; i < list1.length; i++) {
-      if (list1[i] != list2[i]) return false;
-    }
-    return true;
-  }
+      const DeepCollectionEquality().hash(leaveDays);
 
   /// Given a list of days, produces a sorted list additionally containing any contiguous
   /// weekends and public holidays, as well as the preceding day.

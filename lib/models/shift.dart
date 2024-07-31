@@ -62,9 +62,15 @@ class Shift {
   }
 
   bool fullyStaffed() {
-    return mainDoctor != null &&
-        caesarCoverDoctor != null &&
-        secondOnCallDoctor != null &&
-        weekendDayDoctor != null;
+    if (type == 'Weekday') {
+      return mainDoctor != null &&
+          caesarCoverDoctor != null &&
+          secondOnCallDoctor != null;
+    } else {
+      return mainDoctor != null &&
+          caesarCoverDoctor != null &&
+          secondOnCallDoctor != null &&
+          weekendDayDoctor != null;
+    }
   }
 }

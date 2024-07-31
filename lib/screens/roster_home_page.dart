@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rostrem/models/assignment_generator.dart';
 import 'package:rostrem/widgets/loading_overlay.dart';
 import '../models/doctor.dart';
 import '../models/shift.dart';
@@ -21,6 +22,7 @@ class RosterHomePageState extends State<RosterHomePage> {
   OverlayEntry? _overlayEntry;
   List<Doctor> doctors = [];
   List<Shift> shifts = [];
+  late AssignmentGenerator assigner;
   late Roster roster;
   Map<String, double> hoursPerShiftType = {
     'Overnight Weekday': 16,
@@ -156,14 +158,16 @@ class RosterHomePageState extends State<RosterHomePage> {
   }
 
   void _initializeRoster() {
-    roster = Roster(
-      doctors: doctors,
-      shifts: shifts,
+    assigner = AssignmentGenerator(
       hoursPerShiftType: hoursPerShiftType,
       maxOvertimeHours: maxOvertimeHours,
       postCallBeforeLeave: _postCallBeforeLeaveValueNotifier.value,
     );
-    roster.assignShifts();
+    roster = Roster(
+      doctors: doctors,
+      shifts: shifts,
+    );
+    assigner.assignShifts(roster);
   }
 
   bool _isPublicHoliday(DateTime date) {

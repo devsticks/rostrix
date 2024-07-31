@@ -94,6 +94,23 @@ void main() {
       expect(doctor1 == doctor2, true);
     });
 
+    test('Copied Doctor can be compared', () {
+      final today = DateTime.now();
+      Doctor doctor1 = Doctor(
+          name: 'Dr. Test',
+          canPerformCaesars: true,
+          canPerformAnaesthetics: false);
+      doctor1.overtimeHours = 10;
+      doctor1.overnightWeekdayCalls = 1;
+      doctor1.secondOnCallWeekdayCalls = 2;
+      doctor1.caesarCoverWeekdayCalls = 3;
+      doctor1.weekendCalls = 4;
+      doctor1.caesarCoverWeekendCalls = 5;
+      doctor1.leaveDays.add(today);
+      Doctor doctor2 = doctor1.copy();
+      expect(doctor1 == doctor2, true);
+    });
+
     test('Doctor can be compared for identical objects', () {
       final doctor1 = Doctor(
           name: 'Dr. Test',
