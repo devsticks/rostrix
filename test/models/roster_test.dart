@@ -24,6 +24,8 @@ void main() {
     late Map<String, double> hoursPerShiftType;
     late Roster roster;
     late AssignmentGenerator assigner;
+    late double weekdayShiftHours;
+    late double weekendShiftHours;
 
     setUp(() {
       doctors = [
@@ -58,6 +60,12 @@ void main() {
         'Caesar Cover Weekend': 10,
         'Overnight Weekend': 14,
       };
+      weekdayShiftHours = hoursPerShiftType['Overnight Weekday']! +
+          hoursPerShiftType['Caesar Cover Weekday']! +
+          hoursPerShiftType['Second On Call Weekday']!;
+      weekendShiftHours = 2 * hoursPerShiftType['Day Weekend']! +
+          hoursPerShiftType['Caesar Cover Weekend']! +
+          hoursPerShiftType['Overnight Weekend']!;
       assigner = AssignmentGenerator(hoursPerShiftType: hoursPerShiftType);
       roster = Roster(
         doctors: doctors,
@@ -167,5 +175,75 @@ void main() {
       expect(progressNotifier.value, 1.0,
           reason: 'Progress notifier should be at 1.0 after retries');
     });
+
+    test(
+        'retryAssignments() updates the overtime correctly for the relevant doctors for a single weekday shift roster',
+        () async {
+      roster.shifts = [shifts[0]];
+
+      ValueNotifier<double> progressNotifier = ValueNotifier<double>(0);
+      await roster.retryAssignments(100, progressNotifier);
+
+      double totalOvertimeAllocated = 0.0;
+      for (var doctor in doctors) {
+        totalOvertimeAllocated += doctor.overtimeHours;
+      }
+
+      double totalOvertimeToAllocate = weekdayShiftHours;
+
+      expect(totalOvertimeAllocated, totalOvertimeToAllocate,
+          reason:
+              'Total overtime should be $totalOvertimeToAllocate after assigning one weekday shift');
+    }, retry: 100);
+
+    test(
+        'retryAssignments() updates the overtime correctly for the relevant doctors for a single weekend shift roster',
+        () async {
+      roster.shifts = [shifts[0]];
+      roster.shifts[0].type = 'Weekend';
+
+      ValueNotifier<double> progressNotifier = ValueNotifier<double>(0);
+      await roster.retryAssignments(100, progressNotifier);
+
+      double totalOvertimeAllocated = 0.0;
+      for (var doctor in doctors) {
+        totalOvertimeAllocated += doctor.overtimeHours;
+      }
+
+      double totalOvertimeToAllocate = weekendShiftHours;
+
+      expect(totalOvertimeAllocated, totalOvertimeToAllocate,
+          reason:
+              'Total overtime should be $totalOvertimeToAllocate after assigning one weekday shift');
+    }, retry: 100);
+
+    test(
+        'retryAssignments() updates the overtime correctly for the relevant doctors for a weekday & weekend shift roster',
+        () async {
+      roster.shifts = [shifts[0], shifts[1]];
+      roster.shifts[1].type = 'Weekend';
+
+      ValueNotifier<double> progressNotifier = ValueNotifier<double>(0);
+      await roster.retryAssignments(100, progressNotifier);
+
+      double totalOvertimeAllocated = 0.0;
+      for (var doctor in doctors) {
+        totalOvertimeAllocated += doctor.overtimeHours;
+      }
+
+      double totalOvertimeToAllocate = 0.0;
+      for (var shift in shifts) {
+        if (shift.type == 'Weekday') {
+          totalOvertimeToAllocate += weekdayShiftHours;
+        }
+        if (shift.type == 'Weekend') {
+          totalOvertimeToAllocate += weekendShiftHours;
+        }
+      }
+
+      expect(totalOvertimeAllocated, totalOvertimeToAllocate,
+          reason:
+              'Total overtime should be $totalOvertimeToAllocate after assigning one weekday and one weekend shift');
+    }, retry: 100);
   });
 }

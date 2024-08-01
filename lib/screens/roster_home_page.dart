@@ -167,6 +167,7 @@ class RosterHomePageState extends State<RosterHomePage> {
     roster = Roster(
       doctors: doctors,
       shifts: shifts,
+      assigner: assigner,
     );
     assigner.assignShifts(roster);
   }

@@ -20,23 +20,24 @@ class AssignmentGenerator {
     },
     this.maxOvertimeHours = 90,
     this.postCallBeforeLeave = true,
-  });
+  }) {
+    assert(hoursPerShiftType.isNotEmpty);
+    assert(maxOvertimeHours > 0);
+  }
 
   Future<bool> retryAssignments(Roster roster, int retries,
       ValueNotifier<double> progressNotifier) async {
-    Roster bestRoster = Roster(doctors: [], shifts: []);
+    roster.clearAssignments();
+    Roster bestRoster = roster;
     double bestScore = double.infinity;
     int validRostersFound = 0;
 
     for (int i = 0; i < retries; i++) {
       progressNotifier.value = (i + 1) / retries;
-      await Future.delayed(const Duration(milliseconds: 1));
+      await Future.delayed(const Duration(microseconds: 1));
 
-      Roster tempRoster = Roster(
-        doctors: roster.doctors.map((d) => d.copy()).toList(),
-        shifts: roster.shifts.map((s) => s.copy()).toList(),
-        assigner: this,
-      );
+      roster.clearAssignments();
+      Roster tempRoster = roster;
 
       bool filled = assignShifts(tempRoster);
 
@@ -249,7 +250,10 @@ class AssignmentGenerator {
         weekendDays++;
       }
     }
-    weekendCallsVariance /= weekendDays;
+
+    if (weekendDays != 0) {
+      weekendCallsVariance /= weekendDays;
+    }
 
     // Calculate the variance of overtime hours among doctors
     double meanHours =
