@@ -8,6 +8,9 @@ import 'shift.dart';
 import 'assignment_generator.dart';
 import 'package:open_file/open_file.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:universal_html/html.dart' as html;
+import 'dart:convert';
 
 class Roster {
   List<Doctor> doctors;
@@ -158,7 +161,7 @@ class Roster {
     doctor.leaveDays.addAll(leaveDays);
   }
 
-  Future<void> downloadAsCsv(BuildContext context) async {
+  String makeCsv() {
     String csv = 'Roster - ${DateFormat('MMM yyyy').format(shifts[0].date)}\n';
     csv += 'Date,Day/Eve (2nd-on-call),Night,CS Cover,Leave\n';
     for (Shift shift in shifts) {
@@ -188,89 +191,110 @@ class Roster {
           '${doctor.name},${doctor.overtimeHours.toStringAsFixed(1)},${doctor.weekendCalls.toStringAsFixed(1)},${doctor.overnightWeekdayCalls.toStringAsFixed(1)},${doctor.secondOnCallWeekdayCalls.toStringAsFixed(1)},${doctor.caesarCoverWeekdayCalls.toStringAsFixed(1)},${doctor.caesarCoverWeekendCalls.toStringAsFixed(1)}\n';
     }
 
-    const XTypeGroup typeGroup = XTypeGroup(
-      label: 'csv',
-      extensions: ['csv'],
-    );
+    return csv;
+  }
 
-    final FileSaveLocation? saveLocation = await getSaveLocation(
-      acceptedTypeGroups: [typeGroup],
-      suggestedName:
-          'Roster ${DateFormat('yyyy-MM').format(shifts[0].date)}.csv',
-    );
+  Future<void> downloadAsCsv(BuildContext context) async {
+    final String csv = makeCsv();
+    final String suggestedName =
+        'Roster ${DateFormat('yyyy-MM').format(shifts[0].date)}.csv';
 
-    if (saveLocation == null) {
-      // nothing selected
-      return;
-    }
+    if (kIsWeb) {
+      // Web-specific code
+      final bytes = utf8.encode(csv);
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
 
-    try {
-      final file = File(saveLocation.path);
-      await file.writeAsString(csv);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute("download", suggestedName)
+        ..click();
 
-      // Inform the user that the file has been saved
-      print('CSV file saved to: ${saveLocation.path}');
+      html.Url.revokeObjectUrl(url);
+    } else {
+      // Non-web platform code
+      const XTypeGroup typeGroup = XTypeGroup(
+        label: 'csv',
+        extensions: ['csv'],
+      );
 
-      // Optionally, show a dialog to inform the user
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('CSV Exported'),
-            content:
-                Text('The CSV file has been saved to: ${saveLocation.path}'),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Open'),
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  await OpenFile.open(saveLocation.path);
-                },
-              ),
-              TextButton(
-                child: const Text('Show Location'),
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  if (Platform.isWindows) {
-                    await Process.run(
-                        'explorer.exe', ['/select,', saveLocation.path]);
-                  } else if (Platform.isMacOS) {
-                    await Process.run('open', ['-R', saveLocation.path]);
-                  } else {
-                    // Fallback for other platforms if needed
+      final FileSaveLocation? saveLocation = await getSaveLocation(
+        acceptedTypeGroups: [typeGroup],
+        suggestedName: suggestedName,
+      );
+
+      if (saveLocation == null) {
+        // nothing selected
+        return;
+      }
+
+      try {
+        final file = File(saveLocation.path);
+        await file.writeAsString(csv);
+
+        // Inform the user that the file has been saved
+        print('CSV file saved to: ${saveLocation.path}');
+
+        // Optionally, show a dialog to inform the user
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('CSV Exported'),
+              content:
+                  Text('The CSV file has been saved to: ${saveLocation.path}'),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Open'),
+                  onPressed: () async {
+                    Navigator.of(context).pop();
                     await OpenFile.open(saveLocation.path);
-                  }
-                },
-              ),
-              TextButton(
-                child: const Text('OK'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        },
-      );
-    } catch (e) {
-      print('Error saving CSV file: $e');
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Error'),
-            content: const Text('Failed to save the CSV file.'),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('OK'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        },
-      );
+                  },
+                ),
+                TextButton(
+                  child: const Text('Show Location'),
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    if (Platform.isWindows) {
+                      await Process.run(
+                          'explorer.exe', ['/select,', saveLocation.path]);
+                    } else if (Platform.isMacOS) {
+                      await Process.run('open', ['-R', saveLocation.path]);
+                    } else {
+                      // Fallback for other platforms if needed
+                      await OpenFile.open(saveLocation.path);
+                    }
+                  },
+                ),
+                TextButton(
+                  child: const Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      } catch (e) {
+        print('Error saving CSV file: $e');
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Error'),
+              content: const Text('Failed to save the CSV file.'),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
     }
   }
 
