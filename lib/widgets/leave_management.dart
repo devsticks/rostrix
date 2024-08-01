@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import '../models/doctor.dart';
 
@@ -110,7 +111,12 @@ class _LeaveManagementState extends State<LeaveManagement> {
             } else {
               return Row(
                 children: formElements
-                    .map((widget) => Expanded(child: widget))
+                    .map((widget) => Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: widget,
+                          ),
+                        ))
                     .toList(),
               );
             }

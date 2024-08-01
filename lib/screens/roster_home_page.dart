@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rostrem/models/assignment_generator.dart';
+import 'package:rostrem/widgets/header_text.dart';
 import 'package:rostrem/widgets/loading_overlay.dart';
 import '../models/doctor.dart';
 import '../models/shift.dart';
@@ -283,6 +284,7 @@ class RosterHomePageState extends State<RosterHomePage> {
             onPressed: () {
               _retryAssignments(1000);
             },
+            tooltip: 'Regenerate Assignments',
           ),
         ],
       ),
@@ -292,30 +294,69 @@ class RosterHomePageState extends State<RosterHomePage> {
             children: [
               Expanded(
                 flex: 1,
-                child: RosterDisplay(
-                  shifts: shifts,
-                  isPublicHoliday: _isPublicHoliday,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Roster',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20.0,
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      Expanded(
+                        child: RosterDisplay(
+                          shifts: shifts,
+                          isPublicHoliday: _isPublicHoliday,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               Expanded(
                 flex: 1,
-                child: Column(
-                  children: [
-                    Expanded(
-                      flex: 1,
-                      child: DoctorsSummaryTable(doctors: doctors),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: LeaveManagement(
-                        doctors: doctors,
-                        onAddLeave: _addLeaveDays,
-                        onRemoveLeave: _removeLeaveBlock,
-                        postCallBeforeLeaveValueNotifier:
-                            _postCallBeforeLeaveValueNotifier,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Summary',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20.0,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8.0),
+                      Expanded(
+                        flex: 1,
+                        child: DoctorsSummaryTable(doctors: doctors),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Leave Management',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20.0,
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      Expanded(
+                        flex: 1,
+                        child: LeaveManagement(
+                          doctors: doctors,
+                          onAddLeave: _addLeaveDays,
+                          onRemoveLeave: _removeLeaveBlock,
+                          postCallBeforeLeaveValueNotifier:
+                              _postCallBeforeLeaveValueNotifier,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -327,6 +368,7 @@ class RosterHomePageState extends State<RosterHomePage> {
         onPressed: () {
           roster.downloadAsCsv(context);
         },
+        tooltip: 'Download as Spreadsheet (CSV)',
       ),
     );
   }
