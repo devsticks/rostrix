@@ -27,10 +27,12 @@ endif
 	@echo "Deploying to git repository"
 	cd build/web && \
 	git init && \
+	git config user.name "github-actions[bot]" && \
+	git config user.email "github-actions[bot]@users.noreply.github.com" && \
 	git add . && \
 	git commit -m "Deploy Version $(BUILD_VERSION)" && \
 	git branch -M main && \
-	git remote add origin $(GITHUB_REPO) && \
+	git remote add origin https://x-access-token:${GITHUB_TOKEN}@github.com/$(GITHUB_USER)/$(OUTPUT).git && \
 	git push -u -f origin main
 
 	@echo "✅ Finished deploy: $(GITHUB_REPO)"
