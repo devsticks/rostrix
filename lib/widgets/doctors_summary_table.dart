@@ -8,8 +8,8 @@ class DoctorsSummaryTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.vertical,
+    return Container(
+      // scrollDirection: Axis.vertical,
       child: DataTable(
         columnSpacing: 10.0, // Adjust the column spacing as needed
         columns: const [
