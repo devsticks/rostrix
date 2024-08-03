@@ -91,7 +91,6 @@ class _LeaveManagementState extends State<LeaveManagement> {
       children: [
         Row(
           children: [
-            // Check box for whether a doctor should be post-call the day before they start their leave
             Checkbox(
                 value: _postCallBeforeLeave,
                 onChanged: (value) {
@@ -100,7 +99,7 @@ class _LeaveManagementState extends State<LeaveManagement> {
                     widget.postCallBeforeLeaveValueNotifier.value = value;
                   });
                 }),
-            const Expanded(child: Text('Post-call the day before leave')),
+            Expanded(child: Text('Post-call the day before leave')),
           ],
         ),
         LayoutBuilder(
@@ -122,27 +121,28 @@ class _LeaveManagementState extends State<LeaveManagement> {
             }
           },
         ),
-        Expanded(
-          child: ListView(
-            children: widget.doctors.expand((doctor) {
-              List<List<DateTime>> leaveBlocks =
-                  _getLeaveBlocks(doctor.leaveDays);
-              return leaveBlocks.map((block) {
-                DateTime startDate = block.first;
-                DateTime endDate = block.last;
-                return ListTile(
-                  title: Text(
-                      '${doctor.name}: ${startDate.toIso8601String().split('T')[0]} - ${endDate.toIso8601String().split('T')[0]}'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      widget.onRemoveLeave(doctor, block);
-                    },
-                  ),
-                );
-              }).toList();
-            }).toList(),
-          ),
+        ListView(
+          shrinkWrap: true, // Allows ListView to take minimum needed space
+          physics:
+              NeverScrollableScrollPhysics(), // Disables scrolling within the ListView
+          children: widget.doctors.expand((doctor) {
+            List<List<DateTime>> leaveBlocks =
+                _getLeaveBlocks(doctor.leaveDays);
+            return leaveBlocks.map((block) {
+              DateTime startDate = block.first;
+              DateTime endDate = block.last;
+              return ListTile(
+                title: Text(
+                    '${doctor.name}: ${startDate.toIso8601String().split('T')[0]} - ${endDate.toIso8601String().split('T')[0]}'),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    widget.onRemoveLeave(doctor, block);
+                  },
+                ),
+              );
+            }).toList();
+          }).toList(),
         ),
       ],
     );

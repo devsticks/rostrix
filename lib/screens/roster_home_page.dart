@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:rostrem/models/assignment_generator.dart';
-import 'package:rostrem/widgets/header_text.dart';
 import 'package:rostrem/widgets/loading_overlay.dart';
 import '../models/doctor.dart';
 import '../models/shift.dart';
@@ -37,6 +36,8 @@ class RosterHomePageState extends State<RosterHomePage> {
   // year and month for next month
   int year = DateTime.now().add(const Duration(days: 31)).year;
   int month = DateTime.now().add(const Duration(days: 31)).month;
+  late TextEditingController yearController;
+  late TextEditingController monthController;
 
   final List<String> _loadingMessages = [
     'Preparing your new roster...',
@@ -78,6 +79,8 @@ class RosterHomePageState extends State<RosterHomePage> {
   @override
   void initState() {
     super.initState();
+    yearController = TextEditingController(text: year.toString());
+    monthController = TextEditingController(text: month.toString());
     _initializeDoctors();
     _initializeShifts();
     _initializeRoster();
@@ -86,6 +89,8 @@ class RosterHomePageState extends State<RosterHomePage> {
   @override
   void dispose() {
     _postCallBeforeLeaveValueNotifier.dispose();
+    yearController.dispose();
+    monthController.dispose();
     super.dispose();
   }
 
@@ -250,35 +255,86 @@ class RosterHomePageState extends State<RosterHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Doctors\' Overtime Call Roster'),
-        actions: [
-          // Input for the year and month
-          Row(
-            children: [
-              const Text('Year: '),
-              SizedBox(
-                width: 60,
-                child: TextField(
-                  controller: TextEditingController(text: year.toString()),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    year = int.tryParse(value) ?? year;
-                    _initializeShifts();
+        actions: <Widget>[
+          LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              if (MediaQuery.of(context).size.width > 600) {
+                // Adjust threshold as needed
+                return Row(
+                  children: [
+                    const Text('Year: '),
+                    SizedBox(
+                      width: 60,
+                      child: TextField(
+                        controller: yearController,
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          year = int.tryParse(value) ?? year;
+                          _initializeShifts();
+                        },
+                      ),
+                    ),
+                    const Text('Month: '),
+                    SizedBox(
+                      width: 60,
+                      child: TextField(
+                        controller: monthController,
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          month = int.tryParse(value) ?? month;
+                          _initializeShifts();
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              } else {
+                return IconButton(
+                  icon: const Icon(Icons.settings),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text("Set Month"),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextField(
+                                controller: yearController,
+                                keyboardType: TextInputType.number,
+                                decoration:
+                                    const InputDecoration(labelText: "Year"),
+                                onChanged: (value) {
+                                  year = int.tryParse(value) ?? year;
+                                  _initializeShifts();
+                                },
+                              ),
+                              TextField(
+                                controller: monthController,
+                                keyboardType: TextInputType.number,
+                                decoration:
+                                    const InputDecoration(labelText: "Month"),
+                                onChanged: (value) {
+                                  month = int.tryParse(value) ?? month;
+                                  _initializeShifts();
+                                },
+                              ),
+                            ],
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('Close'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
                   },
-                ),
-              ),
-              const Text('Month: '),
-              SizedBox(
-                width: 60,
-                child: TextField(
-                  controller: TextEditingController(text: month.toString()),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    month = int.tryParse(value) ?? month;
-                    _initializeShifts();
-                  },
-                ),
-              ),
-            ],
+                );
+              }
+            },
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -289,84 +345,75 @@ class RosterHomePageState extends State<RosterHomePage> {
           ),
         ],
       ),
-      body: Stack(
+      body: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                flex: 1,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        'Roster',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20.0,
-                        ),
-                      ),
-                      const SizedBox(height: 8.0),
-                      Expanded(
-                        child: RosterDisplay(
-                          shifts: shifts,
-                          isPublicHoliday: _isPublicHoliday,
-                        ),
-                      ),
-                    ],
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Roster',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20.0,
+                    ),
                   ),
+                  const SizedBox(height: 8.0),
+                  Expanded(
+                    child: RosterDisplay(
+                      shifts: shifts,
+                      isPublicHoliday: _isPublicHoliday,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Summary',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20.0,
+                      ),
+                    ),
+                    const SizedBox(height: 8.0),
+                    DoctorsSummaryTable(doctors: doctors),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Leave Management',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20.0,
+                      ),
+                    ),
+                    const SizedBox(height: 8.0),
+                    LeaveManagement(
+                      doctors: doctors,
+                      onAddLeave: _addLeaveDays,
+                      onRemoveLeave: _removeLeaveBlock,
+                      postCallBeforeLeaveValueNotifier:
+                          _postCallBeforeLeaveValueNotifier,
+                    ),
+                  ],
                 ),
               ),
-              Expanded(
-                flex: 1,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        'Summary',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20.0,
-                        ),
-                      ),
-                      const SizedBox(height: 8.0),
-                      Expanded(
-                        flex: 1,
-                        child: DoctorsSummaryTable(doctors: doctors),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Leave Management',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20.0,
-                        ),
-                      ),
-                      const SizedBox(height: 8.0),
-                      Expanded(
-                        flex: 1,
-                        child: LeaveManagement(
-                          doctors: doctors,
-                          onAddLeave: _addLeaveDays,
-                          onRemoveLeave: _removeLeaveBlock,
-                          postCallBeforeLeaveValueNotifier:
-                              _postCallBeforeLeaveValueNotifier,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.download),
         onPressed: () {
+          // Assuming 'roster' is correctly defined somewhere in your code
           roster.downloadAsCsv(context);
         },
         tooltip: 'Download as Spreadsheet (CSV)',
