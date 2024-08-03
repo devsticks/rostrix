@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: deploy_website
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
     - name: Set up Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: 'stable'
+        channel: stable
 
     - name: Run Makefile Deploy
       env:
