@@ -189,7 +189,9 @@ class AssignmentGenerator {
 
       Shift lastShift = roster.shifts[roster.shifts.length - 1];
       if (isWeekendPair && shift != lastShift) {
-        Shift nextDayShift = roster.shifts.firstWhere((s) => s.date == nextDay);
+        Shift nextDayShift = roster.shifts.firstWhere(
+          (s) => isSameDate(s.date, nextDay),
+        );
         nextDayShift.weekendDayDoctor = shift.weekendDayDoctor!;
         nextDayShift.secondOnCallDoctor = shift.secondOnCallDoctor!;
         nextDayShift.caesarCoverDoctor = shift.caesarCoverDoctor!;
@@ -205,6 +207,13 @@ class AssignmentGenerator {
       // Handle error: Not enough doctors available
       print('Not enough doctors available for ${shift.date}');
     }
+  }
+
+  // Helper function to compare dates only (ignoring time)
+  bool isSameDate(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 
   void _updateDoctorOvertime(Doctor doctor, String shiftType) {

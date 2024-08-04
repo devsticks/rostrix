@@ -1,4 +1,4 @@
-name: deploy_website
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -16,9 +16,16 @@ jobs:
     - name: Set up Flutter
       uses: subosito/flutter-action@v2
       with:
-        channel: stable
+        flutter-version: 'stable'
 
-    - name: Run Makefile Deploy
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: make deploy OUTPUT=rostrem-website
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Build Flutter web
+      run: flutter build web --release --base-href /rostrem-website/
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./build/web
