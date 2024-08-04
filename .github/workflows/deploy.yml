@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: deploy_website
 
 on:
   push:
@@ -37,4 +37,5 @@ jobs:
         git commit -m "Deploy Version $(date +'%Y-%m-%d %H:%M:%S') - Commit $COMMIT_HASH"
         git branch -M main
         git remote add origin https://x-access-token:${GITHUB_TOKEN}@github.com/devsticks/rostrem-website.git
+        git config --local --unset-all http.https://github.com/.extraheader || echo "No extra headers to unset"
         git push -u -f origin main
