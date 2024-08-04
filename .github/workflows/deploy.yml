@@ -1,4 +1,4 @@
-name: deploy_website
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -24,8 +24,17 @@ jobs:
     - name: Build Flutter web
       run: flutter build web --release --base-href /rostrem-website/
 
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./build/web
+    - name: Deploy to Separate Repository
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COMMIT_HASH: ${{ github.sha }}
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        cd build/web
+        git init
+        git add .
+        git commit -m "Deploy Version $(date +'%Y-%m-%d %H:%M:%S') - Commit $COMMIT_HASH"
+        git branch -M main
+        git remote add origin https://x-access-token:${GITHUB_TOKEN}@github.com/devsticks/rostrem-website.git
+        git push -u -f origin main
