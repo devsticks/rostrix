@@ -13,33 +13,28 @@ ifndef OUTPUT
 endif
 
 	@echo "Clean existing repository"
-	flutter clean || { echo "Flutter clean failed"; exit 1; }
+	flutter clean
 
 	@echo "Getting packages..."
-	flutter pub get || { echo "Flutter pub get failed"; exit 1; }
+	flutter pub get
 
 	@echo "Generating the web folder..."
-	flutter create . --platform web || { echo "Flutter create failed"; exit 1; }
+	flutter create . --platform web
 
 	@echo "Building for web..."
-	flutter build web --base-href $(BASE_HREF) --release || { echo "Flutter build failed"; exit 1; }
+	flutter build web --base-href $(BASE_HREF) --release
 
 	@echo "Deploying to git repository"
 	cd build/web && \
 	echo "Current directory: $(shell pwd)" && \
 	echo "Listing files before Git operations:" && \
 	ls -la && \
-	git init && echo "Git init exited with code $$?" && \
-	git checkout -b main && echo "Git checkout exited with code $$?" && \
-	git config user.name "github-actions[bot]" && \
-	git config user.email "github-actions[bot]@users.noreply.github.com" && \
-	git config --unset-all http.https://github.com/.extraheader && \
-	git add . && echo "Git add exited with code $$?" && \
-	git commit -m "Deploy Version $(BUILD_VERSION)" && echo "Git commit exited with code $$?" && \
-	git remote add origin https://x-access-token:${GITHUB_TOKEN}@github.com/$(GITHUB_USER)/$(OUTPUT).git && \
-	echo "Git remote add exited with code $$?" && \
-	git push -u -f origin main && echo "Git push exited with code $$?" && \
-	echo "Deployment successful"
+	git init && \
+	git checkout -b main && \
+	git add . && \
+	git commit -m "Deploy Version $(BUILD_VERSION)" && \
+	git remote add origin $(GITHUB_REPO) && \
+	git push -u -f origin main && \
 
 	@echo "✅ Finished deploy: $(GITHUB_REPO)"
 	@echo "🚀 Flutter web URL: https://$(GITHUB_USER).github.io/$(OUTPUT)/"
