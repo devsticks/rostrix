@@ -1,0 +1,31 @@
+name: Test Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up GitHub Credentials
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Test Git Push
+      run: |
+        mkdir test-repo
+        cd test-repo
+        git init
+        echo "Test file" > test.txt
+        git add test.txt
+        git commit -m "Test commit"
+        git branch -M main
+        git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/devsticks/rostrem-website.git
+        git push -u -f origin main
