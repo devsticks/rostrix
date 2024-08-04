@@ -29,6 +29,7 @@ endif
 	git init && \
 	git config user.name "github-actions[bot]" && \
 	git config user.email "github-actions[bot]@users.noreply.github.com" && \
+	git config --unset-all http.https://github.com/.extraheader && \
 	git add . && \
 	git commit -m "Deploy Version $(BUILD_VERSION)" && \
 	git branch -M main && \
