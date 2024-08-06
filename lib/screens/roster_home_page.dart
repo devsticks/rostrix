@@ -279,18 +279,6 @@ class RosterHomePageState extends State<RosterHomePage> {
     );
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  void _toggleSidebar() {
-    setState(() {
-      _isSidebarMinimized = !_isSidebarMinimized;
-    });
-  }
-
   Widget _buildYearMonthSelector() {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
@@ -567,7 +555,7 @@ class CustomSidebar extends StatelessWidget {
           height: 100,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Image.asset('assets/app_icons/Icon-192.png'),
+            child: Image.asset('assets/app_icons/Rostrix Logo 192 alpha.png'),
           ),
         );
       },
