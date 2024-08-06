@@ -443,7 +443,7 @@ class RosterHomePageState extends State<RosterHomePage> {
           _buildYearMonthSelector(),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => _retryAssignments(1000),
+            onPressed: () => _retryAssignments(10000),
             tooltip: 'Regenerate Assignments',
           ),
         ],
