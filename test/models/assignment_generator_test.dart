@@ -33,9 +33,9 @@ void main() {
       ];
       shifts = [
         Shift(
-            date: DateTime.now().subtract(const Duration(days: 1)),
+            date: DateTime(2024, 8, 6, 6), // a Tuesday
             type: 'Weekday'),
-        Shift(date: DateTime.now(), type: 'Weekday'),
+        Shift(date: DateTime(2024, 8, 7, 6), type: 'Weekday'),
       ];
       hoursPerShiftType = {
         'Overnight Weekday': 12,
@@ -177,8 +177,9 @@ void main() {
 
     test('assignShifts() assigns all shifts for single-shift weekend roster',
         () {
-      roster.shifts = [shifts[0]];
-      roster.shifts[0].type = 'Weekend';
+      roster.shifts = [
+        Shift(date: DateTime(2024, 8, 3, 6), type: 'Weekend')
+      ]; // a Saturday
 
       assigner.assignShifts(roster);
 
@@ -196,8 +197,10 @@ void main() {
     });
 
     test('assignShifts() assigns all shifts for two-shift weekend roster', () {
-      roster.shifts[0].type = 'Weekend';
-      roster.shifts[1].type = 'Weekend';
+      roster.shifts = [
+        Shift(date: DateTime(2024, 8, 3, 6), type: 'Weekend'),
+        Shift(date: DateTime(2024, 8, 4, 6), type: 'Weekend')
+      ]; // a Saturday and a Sunday
 
       assigner.assignShifts(roster);
 
@@ -270,8 +273,9 @@ void main() {
     test(
         'assignShifts() updates the overtime correctly for the relevant doctors for a single weekend shift roster',
         () {
-      roster.shifts = [shifts[0]];
-      roster.shifts[0].type = 'Weekend';
+      roster.shifts = [
+        Shift(date: DateTime(2024, 8, 3, 6), type: 'Weekend')
+      ]; // a Saturday
       assigner.assignShifts(roster);
 
       double totalOvertimeAllocated = 0.0;
@@ -289,9 +293,13 @@ void main() {
     test(
         'assignShifts() updates the overtime correctly for the relevant doctors for a weekday & weekend shift roster',
         () {
-      roster.shifts = [shifts[0], shifts[1]];
-      roster.shifts[1].type = 'Weekend';
+      roster.shifts = [
+        Shift(date: DateTime(2024, 8, 4, 6), type: 'Weekend'),
+        Shift(date: DateTime(2024, 8, 7, 6), type: 'Weekday')
+      ]; // a Sunday and Wednesday
       assigner.assignShifts(roster);
+
+      expect(roster.filled, isTrue, reason: 'Roster is not fully filled');
 
       double totalOvertimeAllocated = 0.0;
       for (var doctor in doctors) {
@@ -299,7 +307,7 @@ void main() {
       }
 
       double totalOvertimeToAllocate = 0.0;
-      for (var shift in shifts) {
+      for (var shift in roster.shifts) {
         if (shift.type == 'Weekday') {
           totalOvertimeToAllocate += weekdayShiftHours;
         }

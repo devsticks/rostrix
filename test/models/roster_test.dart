@@ -48,9 +48,9 @@ void main() {
       ];
       shifts = [
         Shift(
-            date: DateTime.now().subtract(const Duration(days: 1)),
+            date: DateTime(2024, 8, 6, 6), // a Tuesday
             type: 'Weekday'),
-        Shift(date: DateTime.now(), type: 'Weekday'),
+        Shift(date: DateTime(2024, 8, 7, 6), type: 'Weekday'),
       ];
       hoursPerShiftType = {
         'Overnight Weekday': 12,
@@ -199,8 +199,9 @@ void main() {
     test(
         'retryAssignments() updates the overtime correctly for the relevant doctors for a single weekend shift roster',
         () async {
-      roster.shifts = [shifts[0]];
-      roster.shifts[0].type = 'Weekend';
+      roster.shifts = [
+        Shift(date: DateTime(2024, 8, 4, 6), type: 'Weekend'),
+      ]; // a Sunday
 
       ValueNotifier<double> progressNotifier = ValueNotifier<double>(0);
       await roster.retryAssignments(100, progressNotifier);
@@ -220,11 +221,15 @@ void main() {
     test(
         'retryAssignments() updates the overtime correctly for the relevant doctors for a weekday & weekend shift roster',
         () async {
-      roster.shifts = [shifts[0], shifts[1]];
-      roster.shifts[1].type = 'Weekend';
+      roster.shifts = [
+        Shift(date: DateTime(2024, 8, 4, 6), type: 'Weekend'),
+        Shift(date: DateTime(2024, 8, 7, 6), type: 'Weekday')
+      ]; // a Sunday and Wednesday
 
       ValueNotifier<double> progressNotifier = ValueNotifier<double>(0);
       await roster.retryAssignments(100, progressNotifier);
+
+      expect(roster.filled, isTrue, reason: 'Roster should be filled');
 
       double totalOvertimeAllocated = 0.0;
       for (var doctor in doctors) {
@@ -232,7 +237,7 @@ void main() {
       }
 
       double totalOvertimeToAllocate = 0.0;
-      for (var shift in shifts) {
+      for (var shift in roster.shifts) {
         if (shift.type == 'Weekday') {
           totalOvertimeToAllocate += weekdayShiftHours;
         }

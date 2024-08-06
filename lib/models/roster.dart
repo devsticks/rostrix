@@ -127,20 +127,20 @@ class Roster {
       }
     }
 
-    // Check if the doctor is not on call the previous night unless it's a weekend
+    // Check if the doctor is not on call on the previous two nights
+    // Weekends break this rule, but are automatically copied between Saturday and Sunday
     DateTime prevDate = date.subtract(const Duration(days: 1));
-    // if (role != 'day') {
+    DateTime prevPrevDate = date.subtract(const Duration(days: 2));
     for (Shift shift in shifts) {
-      if (shift.date == prevDate &&
+      if ((assigner.isSameDate(shift.date, prevDate) ||
+              assigner.isSameDate(shift.date, prevPrevDate)) &&
           (shift.mainDoctor == doctor ||
               shift.caesarCoverDoctor == doctor ||
               shift.secondOnCallDoctor == doctor ||
               shift.weekendDayDoctor == doctor)) {
-        // if (date.weekday != DateTime.saturday) return false;
         return false;
       }
     }
-    // }
 
     // Ensure the main doctor and caesar cover doctor are not the same
     if (role == 'caesarCover' &&
