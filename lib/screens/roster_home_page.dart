@@ -40,7 +40,6 @@ class RosterHomePageState extends State<RosterHomePage> {
   late TextEditingController yearController;
   late TextEditingController monthController;
 
-  int _selectedIndex = 0;
   bool _isSidebarMinimized = false;
   final _sidebarController =
       SidebarXController(selectedIndex: 0, extended: true);
@@ -105,47 +104,45 @@ class RosterHomePageState extends State<RosterHomePage> {
     // Initialize doctors
     doctors = [
       Doctor(
-          name: "Anderson",
+          name: "Zintonga",
           canPerformCaesars: true,
           canPerformAnaesthetics: true),
       Doctor(
-          name: "Bethe",
+          name: "Egbe", canPerformCaesars: true, canPerformAnaesthetics: false),
+      Doctor(
+          name: "Berenisco",
+          canPerformCaesars: true,
+          canPerformAnaesthetics: true),
+      Doctor(
+          name: "Tafeni",
+          canPerformCaesars: false,
+          canPerformAnaesthetics: true),
+      Doctor(
+          name: "Ngombane",
           canPerformCaesars: true,
           canPerformAnaesthetics: false),
       Doctor(
-          name: "Carter",
-          canPerformCaesars: true,
-          canPerformAnaesthetics: true),
-      Doctor(
-          name: "Davies",
-          canPerformCaesars: false,
-          canPerformAnaesthetics: true),
-      Doctor(
-          name: "Elliott",
+          name: "Mtshingila",
           canPerformCaesars: true,
           canPerformAnaesthetics: false),
       Doctor(
-          name: "Fisher",
-          canPerformCaesars: true,
-          canPerformAnaesthetics: false),
-      Doctor(
-          name: "Gcilitshana",
+          name: "Frazer",
           canPerformCaesars: true,
           canPerformAnaesthetics: true),
       Doctor(
-          name: "Hendricks",
+          name: "Nkombisa",
           canPerformCaesars: false,
           canPerformAnaesthetics: true),
       Doctor(
-          name: "Ibrahim",
+          name: "Mlenga",
           canPerformCaesars: false,
           canPerformAnaesthetics: true),
       Doctor(
-          name: "Jansen",
+          name: "Stickells",
           canPerformCaesars: false,
           canPerformAnaesthetics: true),
       Doctor(
-          name: "Khumalo",
+          name: "Noxaka",
           canPerformCaesars: false,
           canPerformAnaesthetics: true),
     ];
