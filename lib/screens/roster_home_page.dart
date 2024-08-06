@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rostrem/models/assignment_generator.dart';
 import 'package:rostrem/widgets/loading_overlay.dart';
+import 'package:sidebarx/sidebarx.dart';
 import '../models/doctor.dart';
 import '../models/shift.dart';
 import '../models/roster.dart';
@@ -38,6 +39,11 @@ class RosterHomePageState extends State<RosterHomePage> {
   int month = DateTime.now().add(const Duration(days: 31)).month;
   late TextEditingController yearController;
   late TextEditingController monthController;
+
+  bool _isSidebarMinimized = false;
+  final _sidebarController =
+      SidebarXController(selectedIndex: 0, extended: true);
+  final _key = GlobalKey<ScaffoldState>();
 
   final List<String> _loadingMessages = [
     'Preparing your new roster...',
@@ -98,47 +104,45 @@ class RosterHomePageState extends State<RosterHomePage> {
     // Initialize doctors
     doctors = [
       Doctor(
-          name: "Anderson",
+          name: "Zintonga",
           canPerformCaesars: true,
           canPerformAnaesthetics: true),
       Doctor(
-          name: "Bethe",
+          name: "Egbe", canPerformCaesars: true, canPerformAnaesthetics: false),
+      Doctor(
+          name: "Berenisco",
+          canPerformCaesars: true,
+          canPerformAnaesthetics: true),
+      Doctor(
+          name: "Tafeni",
+          canPerformCaesars: false,
+          canPerformAnaesthetics: true),
+      Doctor(
+          name: "Ngombane",
           canPerformCaesars: true,
           canPerformAnaesthetics: false),
       Doctor(
-          name: "Carter",
-          canPerformCaesars: true,
-          canPerformAnaesthetics: true),
-      Doctor(
-          name: "Davies",
-          canPerformCaesars: false,
-          canPerformAnaesthetics: true),
-      Doctor(
-          name: "Elliott",
+          name: "Mtshingila",
           canPerformCaesars: true,
           canPerformAnaesthetics: false),
       Doctor(
-          name: "Fisher",
-          canPerformCaesars: true,
-          canPerformAnaesthetics: false),
-      Doctor(
-          name: "Gcilitshana",
+          name: "Frazer",
           canPerformCaesars: true,
           canPerformAnaesthetics: true),
       Doctor(
-          name: "Hendricks",
+          name: "Nkombisa",
           canPerformCaesars: false,
           canPerformAnaesthetics: true),
       Doctor(
-          name: "Ibrahim",
+          name: "Mlenga",
           canPerformCaesars: false,
           canPerformAnaesthetics: true),
       Doctor(
-          name: "Jansen",
+          name: "Stickells",
           canPerformCaesars: false,
           canPerformAnaesthetics: true),
       Doctor(
-          name: "Khumalo",
+          name: "Noxaka",
           canPerformCaesars: false,
           canPerformAnaesthetics: true),
     ];
@@ -250,174 +254,323 @@ class RosterHomePageState extends State<RosterHomePage> {
     _overlayEntry?.remove();
   }
 
+  void _showSummaryDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Doctor Summary'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: DoctorsSummaryTable(doctors: doctors),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildYearMonthSelector() {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        if (!_isSmallScreen(context)) {
+          // Adjust threshold as needed
+          return Row(
+            children: [
+              const Text('Year: '),
+              SizedBox(
+                width: 60,
+                child: TextField(
+                  controller: yearController,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    year = int.tryParse(value) ?? year;
+                    _initializeShifts();
+                  },
+                ),
+              ),
+              const Text('Month: '),
+              SizedBox(
+                width: 60,
+                child: TextField(
+                  controller: monthController,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    month = int.tryParse(value) ?? month;
+                    _initializeShifts();
+                  },
+                ),
+              ),
+            ],
+          );
+        } else {
+          return IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: _showYearMonthDialog,
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildContent() {
+    return AnimatedBuilder(
+      animation: _sidebarController,
+      builder: (context, child) {
+        switch (_sidebarController.selectedIndex) {
+          case 0:
+            return _buildRosterContent();
+          case 1:
+            return _buildLeaveManagementContent();
+          default:
+            return const Center(child: Text('Page not found'));
+        }
+      },
+    );
+  }
+
+  void _showYearMonthDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Set Month"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: yearController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: "Year"),
+                onChanged: (value) {
+                  year = int.tryParse(value) ?? year;
+                  _initializeShifts();
+                },
+              ),
+              TextField(
+                controller: monthController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: "Month"),
+                onChanged: (value) {
+                  month = int.tryParse(value) ?? month;
+                  _initializeShifts();
+                },
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildRosterContent() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Roster',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20.0,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          Expanded(
+            child: RosterDisplay(
+              shifts: shifts,
+              isPublicHoliday: _isPublicHoliday,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          ElevatedButton(
+            onPressed: _showSummaryDialog,
+            child: const Text('Show Doctor Summary'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLeaveManagementContent() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: LeaveManagement(
+        doctors: doctors,
+        onAddLeave: _addLeaveDays,
+        onRemoveLeave: _removeLeaveBlock,
+        postCallBeforeLeaveValueNotifier: _postCallBeforeLeaveValueNotifier,
+      ),
+    );
+  }
+
+  bool _isSmallScreen(BuildContext context) {
+    return MediaQuery.of(context).size.width < 600;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isSmallScreen = _isSmallScreen(context);
     return Scaffold(
+      key: _key,
       appBar: AppBar(
         title: const Text('Doctors\' Overtime Call Roster'),
+        leading: isSmallScreen
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () {
+                  _key.currentState?.openDrawer();
+                },
+              )
+            : null,
         actions: <Widget>[
-          LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              if (MediaQuery.of(context).size.width > 600) {
-                // Adjust threshold as needed
-                return Row(
-                  children: [
-                    const Text('Year: '),
-                    SizedBox(
-                      width: 60,
-                      child: TextField(
-                        controller: yearController,
-                        keyboardType: TextInputType.number,
-                        onChanged: (value) {
-                          year = int.tryParse(value) ?? year;
-                          _initializeShifts();
-                        },
-                      ),
-                    ),
-                    const Text('Month: '),
-                    SizedBox(
-                      width: 60,
-                      child: TextField(
-                        controller: monthController,
-                        keyboardType: TextInputType.number,
-                        onChanged: (value) {
-                          month = int.tryParse(value) ?? month;
-                          _initializeShifts();
-                        },
-                      ),
-                    ),
-                  ],
-                );
-              } else {
-                return IconButton(
-                  icon: const Icon(Icons.settings),
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text("Set Month"),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              TextField(
-                                controller: yearController,
-                                keyboardType: TextInputType.number,
-                                decoration:
-                                    const InputDecoration(labelText: "Year"),
-                                onChanged: (value) {
-                                  year = int.tryParse(value) ?? year;
-                                  _initializeShifts();
-                                },
-                              ),
-                              TextField(
-                                controller: monthController,
-                                keyboardType: TextInputType.number,
-                                decoration:
-                                    const InputDecoration(labelText: "Month"),
-                                onChanged: (value) {
-                                  month = int.tryParse(value) ?? month;
-                                  _initializeShifts();
-                                },
-                              ),
-                            ],
-                          ),
-                          actions: <Widget>[
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('Close'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                );
-              }
-            },
-          ),
+          _buildYearMonthSelector(),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              _retryAssignments(1000);
-            },
+            onPressed: () => _retryAssignments(1000),
             tooltip: 'Regenerate Assignments',
           ),
         ],
       ),
+      drawer: isSmallScreen
+          ? Drawer(
+              child: CustomSidebar(
+                controller: _sidebarController,
+                onSelectionChanged: (index) {
+                  Navigator.of(context).pop(); // Close the drawer
+                },
+                isSmallScreen: isSmallScreen,
+              ),
+            )
+          : null,
       body: Row(
         children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Roster',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20.0,
-                    ),
-                  ),
-                  const SizedBox(height: 8.0),
-                  Expanded(
-                    child: RosterDisplay(
-                      shifts: shifts,
-                      isPublicHoliday: _isPublicHoliday,
-                    ),
-                  ),
-                ],
-              ),
+          if (!isSmallScreen)
+            CustomSidebar(
+              controller: _sidebarController,
+              onSelectionChanged: (index) {
+                // No need to close anything on larger screens
+              },
+              isSmallScreen: isSmallScreen,
             ),
-          ),
           Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Summary',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20.0,
-                      ),
-                    ),
-                    const SizedBox(height: 8.0),
-                    DoctorsSummaryTable(doctors: doctors),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Leave Management',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20.0,
-                      ),
-                    ),
-                    const SizedBox(height: 8.0),
-                    LeaveManagement(
-                      doctors: doctors,
-                      onAddLeave: _addLeaveDays,
-                      onRemoveLeave: _removeLeaveBlock,
-                      postCallBeforeLeaveValueNotifier:
-                          _postCallBeforeLeaveValueNotifier,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            child: _buildContent(),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.download),
-        onPressed: () {
-          // Assuming 'roster' is correctly defined somewhere in your code
-          roster.downloadAsCsv(context);
-        },
+        onPressed: () => roster.downloadAsCsv(context),
         tooltip: 'Download as Spreadsheet (CSV)',
       ),
+    );
+  }
+}
+
+class CustomSidebar extends StatelessWidget {
+  const CustomSidebar({
+    Key? key,
+    required this.controller,
+    required this.onSelectionChanged,
+    required this.isSmallScreen,
+  }) : super(key: key);
+
+  final SidebarXController controller;
+  final Function(int) onSelectionChanged;
+  final bool isSmallScreen;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // Schedule the state update after the build phase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (isSmallScreen) controller.setExtended(true);
+    });
+    return SidebarX(
+      showToggleButton: !isSmallScreen,
+      controller: controller,
+      theme: SidebarXTheme(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: theme.primaryColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        textStyle: theme.textTheme.bodyMedium
+            ?.copyWith(color: theme.colorScheme.onPrimary),
+        selectedTextStyle: theme.textTheme.bodyMedium
+            ?.copyWith(color: theme.colorScheme.onPrimary),
+        itemTextPadding: const EdgeInsets.only(left: 16),
+        selectedItemTextPadding: const EdgeInsets.only(left: 16),
+        itemDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: theme.primaryColor),
+        ),
+        selectedItemDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: theme.colorScheme.onPrimary),
+          gradient: LinearGradient(
+            colors: [theme.primaryColor, theme.primaryColorDark],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: theme.shadowColor.withOpacity(0.28),
+              blurRadius: 30,
+            )
+          ],
+        ),
+        iconTheme: IconThemeData(
+          color: theme.colorScheme.onPrimary.withOpacity(0.7),
+          size: 20,
+        ),
+        selectedIconTheme: IconThemeData(
+          color: theme.colorScheme.onPrimary,
+          size: 20,
+        ),
+      ),
+      extendedTheme: SidebarXTheme(
+        width: 200,
+        decoration: BoxDecoration(
+          color: theme.primaryColor,
+        ),
+      ),
+      headerBuilder: (context, extended) {
+        return SizedBox(
+          height: 100,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Image.asset('assets/app_icons/Rostrix Logo 192 alpha.png'),
+          ),
+        );
+      },
+      items: [
+        SidebarXItem(
+          icon: Icons.calendar_today,
+          label: 'Roster',
+          onTap: () => onSelectionChanged(0),
+        ),
+        SidebarXItem(
+          icon: Icons.access_time,
+          label: 'Leave Management',
+          onTap: () => onSelectionChanged(1),
+        ),
+      ],
     );
   }
 }
