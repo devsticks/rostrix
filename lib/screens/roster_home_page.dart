@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:rostrem/models/assignment_generator.dart';
-import 'package:rostrem/widgets/loading_overlay.dart';
+import 'package:rostrix/models/assignment_generator.dart';
+import 'package:rostrix/widgets/loading_overlay.dart';
 import 'package:sidebarx/sidebarx.dart';
 import '../models/doctor.dart';
 import '../models/shift.dart';
@@ -430,7 +430,7 @@ class RosterHomePageState extends State<RosterHomePage> {
     return Scaffold(
       key: _key,
       appBar: AppBar(
-        title: const Text('Doctors\' Overtime Call Roster'),
+        title: const Text('Rostrix'),
         leading: isSmallScreen
             ? IconButton(
                 icon: const Icon(Icons.menu),

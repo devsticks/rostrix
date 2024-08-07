@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rostrem/models/assignment_generator.dart';
-import 'package:rostrem/models/roster.dart';
-import 'package:rostrem/models/shift.dart';
-import 'package:rostrem/models/doctor.dart';
+import 'package:rostrix/models/assignment_generator.dart';
+import 'package:rostrix/models/roster.dart';
+import 'package:rostrix/models/shift.dart';
+import 'package:rostrix/models/doctor.dart';
 
 void main() {
   group('AssignmentGenerator model tests', () {

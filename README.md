@@ -1,5 +1,5 @@
-[![macos](https://github.com/devsticks/rostrem/actions/workflows/macos.yml/badge.svg)](https://github.com/devsticks/rostrem/actions/workflows/macos.yml) [![tests](https://github.com/devsticks/rostrem/actions/workflows/tests.yml/badge.svg)](https://github.com/devsticks/rostrem/actions/workflows/tests.yml) [![codecov](https://codecov.io/github/devsticks/rostrem/graph/badge.svg?token=KTXO3HV7SL)](https://codecov.io/github/devsticks/rostrem)
-# Rostrem
+[![macos](https://github.com/devsticks/rostrix/actions/workflows/macos.yml/badge.svg)](https://github.com/devsticks/rostrix/actions/workflows/macos.yml) [![tests](https://github.com/devsticks/rostrix/actions/workflows/tests.yml/badge.svg)](https://github.com/devsticks/rostrix/actions/workflows/tests.yml) [![codecov](https://codecov.io/github/devsticks/rostrix/graph/badge.svg?token=KTXO3HV7SL)](https://codecov.io/github/devsticks/rostrix)
+# Rostrix
 
 An automated doctors' roster builder, written in Flutter. For now, set up with the rules followed by Settlers Hospital in Makhanda, South Africa.
 Settlers is a district hospital with 10 Medical Officers.

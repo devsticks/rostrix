@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rostrem/models/shift.dart';
-import 'package:rostrem/models/doctor.dart';
+import 'package:rostrix/models/shift.dart';
+import 'package:rostrix/models/doctor.dart';
 
 void main() {
   group('Shift Model Tests', () {
