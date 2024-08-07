@@ -5,18 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "rostrem",
+            "name": "rostrix",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "rostrem (profile mode)",
+            "name": "rostrix (profile mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "rostrem (release mode)",
+            "name": "rostrix (release mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"

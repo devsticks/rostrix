@@ -22,7 +22,7 @@ jobs:
       run: flutter pub get
 
     - name: Build Flutter web
-      run: flutter build web --release --base-href /rostrem-website/
+      run: flutter build web --release --base-href /rostrix-website/
 
     - name: Deploy to Separate Repository
       env:
@@ -36,5 +36,5 @@ jobs:
         git add .
         git commit -m "Deploy Version $(date +'%Y-%m-%d %H:%M:%S') - Commit $COMMIT_HASH"
         git branch -M main
-        git remote add origin https://x-access-token:${PERSONAL_ACCESS_TOKEN}@github.com/devsticks/rostrem-website.git
+        git remote add origin https://x-access-token:${PERSONAL_ACCESS_TOKEN}@github.com/devsticks/rostrix-website.git
         git push -u -f origin main

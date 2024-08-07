@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.rostrem">
+    package="com.example.rostrix">
    <application
-        android:label="rostrem"
+        android:label="rostrix"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

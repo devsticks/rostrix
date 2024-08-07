@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
-import 'package:rostrem/models/doctor.dart';
+import 'package:rostrix/models/doctor.dart';
 
 void main() {
   group('Doctor Model Tests', () {
