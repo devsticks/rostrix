@@ -27,7 +27,12 @@ class Roster {
 
   Future<bool> retryAssignments(
       int retries, ValueNotifier<double> progressNotifier) async {
-    return await assigner.retryAssignments(this, retries, progressNotifier);
+    return await assigner
+        .retryAssignments(doctors, shifts, retries, progressNotifier, 1)
+        .then((rosters) {
+      filled = rosters.first.filled;
+      return filled;
+    });
   }
 
   List<Doctor>? getAvailableDoctors(String role, DateTime date,

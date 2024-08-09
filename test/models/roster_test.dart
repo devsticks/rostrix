@@ -9,8 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:file_selector/file_selector.dart';
 import 'roster_test.mocks.dart';
 
-// class MockBuildContext extends Mock implements BuildContext {}
+// class MockAssignmentGenerator extends Mock implements AssignmentGenerator {}
 
+// dart run build_runner build --delete-conflicting-outputs
 @GenerateNiceMocks([
   MockSpec<BuildContext>(),
   MockSpec<FileSaveLocation>(),
@@ -100,14 +101,20 @@ void main() {
     test('retryAssignments() calls assigner.retryAssignments()', () async {
       ValueNotifier<double> progressNotifier = ValueNotifier<double>(0);
       AssignmentGenerator assigner = MockAssignmentGenerator();
+      when(assigner.retryAssignments(doctors, shifts, 3, progressNotifier, 1))
+          .thenAnswer((_) async => [Roster(doctors: doctors, shifts: shifts)]);
       Roster roster = Roster(
         doctors: doctors,
         shifts: shifts,
         assigner: assigner,
       );
-      await roster.retryAssignments(3, progressNotifier);
-
-      verify(assigner.retryAssignments(roster, 3, progressNotifier));
+      try {
+        roster.retryAssignments(3, progressNotifier);
+      } finally {
+        verify(assigner.retryAssignments(
+                doctors, shifts, 3, progressNotifier, 1))
+            .called(1);
+      }
     });
 
     test('Roster can be deeply copied', () {

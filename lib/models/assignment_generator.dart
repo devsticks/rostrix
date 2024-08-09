@@ -25,43 +25,104 @@ class AssignmentGenerator {
     assert(maxOvertimeHours > 0);
   }
 
-  Future<bool> retryAssignments(Roster roster, int retries,
-      ValueNotifier<double> progressNotifier) async {
-    roster.clearAssignments();
-    Roster bestRoster = roster;
-    double bestScore = double.infinity;
+  /// Given a set of rosters and a number of retries, this function will attempt to
+  /// fill the rosters with valid assignments. If no valid assignments are found
+  /// after the given number of retries, the function will return false.
+  /// Otherwise, the function will return true and update the rosters, ordered by
+  /// the best score found.
+  /// The progressNotifier is used to update the progress of the function.
+  /// The function will return false if less than 10% of the roster permutations
+  /// were valid.
+  /// The function will return true if at least one valid roster permutation was found.
+  ///
+  /// Parameters:
+  /// - doctors: The list of doctors to assign to the rosters
+  /// - shifts: The list of shifts to assign to the rosters
+  /// - retries: The number of candidate rosters to generate
+  /// - progressNotifier: A ValueNotifier to update the progress of the function
+  /// - outputs: The number of top rosters to return
+  ///
+  /// Returns:
+  /// - A Future<List<Roster>> containing the top roster permutations found
+  ///
+  /// Example:
+  /// ```dart
+  /// List<Doctor> doctors = [
+  ///   Doctor(name: 'Dr. A', canPerformAnaesthetics: true, canPerformCaesars: true),
+  ///   Doctor(name: 'Dr. B', canPerformAnaesthetics: true, canPerformCaesars: true),
+  ///   Doctor(name: 'Dr. C', canPerformAnaesthetics: true, canPerformCaesars: true),
+  ///   Doctor(name: 'Dr. D', canPerformAnaesthetics: true, canPerformCaesars: true),
+  ///   Doctor(name: 'Dr. E', canPerformAnaesthetics: true, canPerformCaesars: true),
+  /// ];
+  /// List<Shift> shifts = [
+  ///   Shift(date: DateTime(2022, 1, 1), type: 'Weekday'),
+  ///   Shift(date: DateTime(2022, 1, 2), type: 'Weekend')
+  /// ];
+  /// AssignmentGenerator generator = AssignmentGenerator();
+  /// ValueNotifier<double> progressNotifier = ValueNotifier(0.0);
+  /// Future<List<Roster>> topRosters = generator.retryAssignments(doctors, shifts, 100, progressNotifier);
+  /// ```
+  ///
+  /// See also:
+  /// - [Roster]
+  /// - [Doctor]
+  /// - [Shift]
+  /// - [ValueNotifier]
+  /// - [Future]
+  /// - [bool]
+  Future<List<Roster>> retryAssignments(List<Doctor> doctors,
+      List<Shift> shifts, int retries, ValueNotifier<double> progressNotifier,
+      [int outputs = 10]) async {
+    List<Roster> topRosters = [];
+    for (int i = 0; i < outputs; i++) {
+      Roster roster = Roster(doctors: doctors, shifts: shifts);
+      roster.clearAssignments();
+      topRosters.add(roster);
+    }
+
+    List<double> topScores = List.filled(outputs, double.infinity);
     int validRostersFound = 0;
 
+    Roster candidateRoster = Roster(doctors: doctors, shifts: shifts);
     for (int i = 0; i < retries; i++) {
       progressNotifier.value = (i + 1) / retries;
       await Future.delayed(const Duration(microseconds: 1));
 
-      roster.clearAssignments();
-      Roster tempRoster = roster;
-
-      bool filled = assignShifts(tempRoster);
+      candidateRoster.clearAssignments();
+      bool filled = assignShifts(candidateRoster);
 
       if (filled) {
         validRostersFound++;
-        double score = _calculateScore(tempRoster);
-        if (score < bestScore) {
-          bestScore = score;
-          bestRoster = tempRoster;
+        double score = _calculateScore(candidateRoster);
+        if (score < topScores[outputs - 1]) {
+          topScores[outputs - 1] = score;
+          topRosters[outputs - 1] = candidateRoster;
+          topScores.sort();
+          topRosters
+              .sort((a, b) => _calculateScore(a).compareTo(_calculateScore(b)));
         }
       }
     }
 
     if (validRostersFound == 0) {
-      print('No valid roster permutations found in $retries tries');
-      return false;
+      return [];
     } else {
       if (validRostersFound / retries < 0.1) {
         print('< 10% of roster permutations were valid');
       }
-      roster.doctors = bestRoster.doctors;
-      roster.shifts = bestRoster.shifts;
-      return true;
+      return topRosters;
     }
+  }
+
+  bool assignShiftsMultipleRosters(List<Roster> rosters) {
+    for (Roster roster in rosters) {
+      roster.clearAssignments();
+      bool filled = assignShifts(roster);
+      if (!filled) {
+        return false;
+      }
+    }
+    return true;
   }
 
   bool assignShifts(Roster roster) {
