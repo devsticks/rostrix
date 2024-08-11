@@ -4,6 +4,13 @@ import 'roster.dart';
 import 'doctor.dart';
 import 'shift.dart';
 
+class ScoredRoster {
+  double score;
+  Roster roster;
+
+  ScoredRoster(this.score, this.roster);
+}
+
 class AssignmentGenerator {
   final Map<String, double> hoursPerShiftType;
   final double maxOvertimeHours;
@@ -73,14 +80,10 @@ class AssignmentGenerator {
   Future<List<Roster>> retryAssignments(List<Doctor> doctors,
       List<Shift> shifts, int retries, ValueNotifier<double> progressNotifier,
       [int outputs = 10]) async {
-    List<Roster> topRosters = [];
-    for (int i = 0; i < outputs; i++) {
-      Roster roster = Roster(doctors: doctors, shifts: shifts);
-      roster.clearAssignments();
-      topRosters.add(roster);
-    }
-
-    List<double> topScores = List.filled(outputs, double.infinity);
+    List<ScoredRoster> topScoredRosters = List.generate(
+        outputs,
+        (_) => ScoredRoster(
+            double.infinity, Roster(doctors: doctors, shifts: shifts)));
     int validRostersFound = 0;
 
     Roster candidateRoster = Roster(doctors: doctors, shifts: shifts);
@@ -94,12 +97,10 @@ class AssignmentGenerator {
       if (filled) {
         validRostersFound++;
         double score = _calculateScore(candidateRoster);
-        if (score < topScores[outputs - 1]) {
-          topScores[outputs - 1] = score;
-          topRosters[outputs - 1] = candidateRoster;
-          topScores.sort();
-          topRosters
-              .sort((a, b) => _calculateScore(a).compareTo(_calculateScore(b)));
+        if (score < topScoredRosters[outputs - 1].score) {
+          topScoredRosters[outputs - 1] =
+              ScoredRoster(score, candidateRoster.copy());
+          topScoredRosters.sort((a, b) => a.score.compareTo(b.score));
         }
       }
     }
@@ -110,7 +111,9 @@ class AssignmentGenerator {
       if (validRostersFound / retries < 0.1) {
         print('< 10% of roster permutations were valid');
       }
-      return topRosters;
+      return topScoredRosters
+          .map((scoredRoster) => scoredRoster.roster)
+          .toList();
     }
   }
 

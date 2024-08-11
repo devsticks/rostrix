@@ -25,6 +25,7 @@ class RosterHomePageState extends State<RosterHomePage> {
   List<Shift> shifts = [];
   late AssignmentGenerator assigner;
   late List<Roster> candidateRosters;
+  int candidateRosterIndex = 0;
   Map<String, double> hoursPerShiftType = {
     'Overnight Weekday': 16,
     'Second On Call Weekday': 6,
@@ -323,6 +324,38 @@ class RosterHomePageState extends State<RosterHomePage> {
     );
   }
 
+  Widget _buildCandidateRosterSelector() {
+    return Row(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            setState(() {
+              if (candidateRosterIndex > 0) {
+                candidateRosterIndex--;
+                doctors = candidateRosters[candidateRosterIndex].doctors;
+                shifts = candidateRosters[candidateRosterIndex].shifts;
+              }
+            });
+          },
+        ),
+        Text('Candidate ${candidateRosterIndex + 1}'),
+        IconButton(
+          icon: const Icon(Icons.arrow_forward),
+          onPressed: () {
+            setState(() {
+              if (candidateRosterIndex < candidateRosters.length - 1) {
+                candidateRosterIndex++;
+                doctors = candidateRosters[candidateRosterIndex].doctors;
+                shifts = candidateRosters[candidateRosterIndex].shifts;
+              }
+            });
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildContent() {
     return AnimatedBuilder(
       animation: _sidebarController,
@@ -392,6 +425,7 @@ class RosterHomePageState extends State<RosterHomePage> {
               fontSize: 20.0,
             ),
           ),
+          _buildCandidateRosterSelector(),
           const SizedBox(height: 8.0),
           Expanded(
             child: RosterDisplay(
@@ -477,7 +511,8 @@ class RosterHomePageState extends State<RosterHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.download),
-        onPressed: () => candidateRosters[0].downloadAsCsv(context),
+        onPressed: () =>
+            candidateRosters[candidateRosterIndex].downloadAsCsv(context),
         tooltip: 'Download as Spreadsheet (CSV)',
       ),
     );
