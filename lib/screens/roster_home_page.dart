@@ -24,7 +24,8 @@ class RosterHomePageState extends State<RosterHomePage> {
   List<Doctor> doctors = [];
   List<Shift> shifts = [];
   late AssignmentGenerator assigner;
-  late Roster roster;
+  late List<Roster> candidateRosters;
+  int candidateRosterIndex = 0;
   Map<String, double> hoursPerShiftType = {
     'Overnight Weekday': 16,
     'Second On Call Weekday': 6,
@@ -173,12 +174,8 @@ class RosterHomePageState extends State<RosterHomePage> {
       maxOvertimeHours: maxOvertimeHours,
       postCallBeforeLeave: _postCallBeforeLeaveValueNotifier.value,
     );
-    roster = Roster(
-      doctors: doctors,
-      shifts: shifts,
-      assigner: assigner,
-    );
-    assigner.assignShifts(roster);
+    candidateRosters = [];
+    assigner.assignShiftsMultipleRosters(candidateRosters);
   }
 
   bool _isPublicHoliday(DateTime date) {
@@ -244,11 +241,16 @@ class RosterHomePageState extends State<RosterHomePage> {
     _progressNotifier.value = 0.0;
     _overlayEntry = _createOverlayEntry();
     Overlay.of(context).insert(_overlayEntry!);
-    await roster.retryAssignments(retries, _progressNotifier);
+    candidateRosters = await assigner.retryAssignments(
+      doctors,
+      shifts,
+      retries,
+      _progressNotifier,
+    );
 
     setState(() {
-      doctors = roster.doctors;
-      shifts = roster.shifts;
+      doctors = candidateRosters[0].doctors;
+      shifts = candidateRosters[0].shifts;
     });
 
     _overlayEntry?.remove();
@@ -322,6 +324,38 @@ class RosterHomePageState extends State<RosterHomePage> {
     );
   }
 
+  Widget _buildCandidateRosterSelector() {
+    return Row(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            setState(() {
+              if (candidateRosterIndex > 0) {
+                candidateRosterIndex--;
+                doctors = candidateRosters[candidateRosterIndex].doctors;
+                shifts = candidateRosters[candidateRosterIndex].shifts;
+              }
+            });
+          },
+        ),
+        Text('Candidate ${candidateRosterIndex + 1}'),
+        IconButton(
+          icon: const Icon(Icons.arrow_forward),
+          onPressed: () {
+            setState(() {
+              if (candidateRosterIndex < candidateRosters.length - 1) {
+                candidateRosterIndex++;
+                doctors = candidateRosters[candidateRosterIndex].doctors;
+                shifts = candidateRosters[candidateRosterIndex].shifts;
+              }
+            });
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildContent() {
     return AnimatedBuilder(
       animation: _sidebarController,
@@ -391,6 +425,7 @@ class RosterHomePageState extends State<RosterHomePage> {
               fontSize: 20.0,
             ),
           ),
+          _buildCandidateRosterSelector(),
           const SizedBox(height: 8.0),
           Expanded(
             child: RosterDisplay(
@@ -476,7 +511,8 @@ class RosterHomePageState extends State<RosterHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.download),
-        onPressed: () => roster.downloadAsCsv(context),
+        onPressed: () =>
+            candidateRosters[candidateRosterIndex].downloadAsCsv(context),
         tooltip: 'Download as Spreadsheet (CSV)',
       ),
     );

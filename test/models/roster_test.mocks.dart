@@ -6,16 +6,18 @@
 import 'dart:async' as _i9;
 
 import 'package:file_selector_platform_interface/src/types/file_save_location.dart'
-    as _i5;
+    as _i6;
 import 'package:file_selector_platform_interface/src/types/x_type_group.dart'
-    as _i7;
+    as _i8;
 import 'package:flutter/foundation.dart' as _i3;
 import 'package:flutter/material.dart' as _i2;
-import 'package:flutter/src/widgets/notification_listener.dart' as _i4;
+import 'package:flutter/src/widgets/notification_listener.dart' as _i5;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i6;
-import 'package:rostrix/models/assignment_generator.dart' as _i8;
+import 'package:mockito/src/dummies.dart' as _i7;
+import 'package:rostrix/models/assignment_generator.dart' as _i4;
+import 'package:rostrix/models/doctor.dart' as _i11;
 import 'package:rostrix/models/roster.dart' as _i10;
+import 'package:rostrix/models/shift.dart' as _i12;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -75,6 +77,17 @@ class _FakeDiagnosticsNode_2 extends _i1.SmartFake
     _i3.DiagnosticLevel? minLevel = _i3.DiagnosticLevel.info,
   }) =>
       super.toString();
+}
+
+class _FakeAssignmentGenerator_3 extends _i1.SmartFake
+    implements _i4.AssignmentGenerator {
+  _FakeAssignmentGenerator_3(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
 }
 
 /// A class which mocks [BuildContext].
@@ -157,7 +170,7 @@ class MockBuildContext extends _i1.Mock implements _i2.BuildContext {
       );
 
   @override
-  void dispatchNotification(_i4.Notification? notification) =>
+  void dispatchNotification(_i5.Notification? notification) =>
       super.noSuchMethod(
         Invocation.method(
           #dispatchNotification,
@@ -265,15 +278,15 @@ class MockBuildContext extends _i1.Mock implements _i2.BuildContext {
 ///
 /// See the documentation for Mockito's code generation for more information.
 // ignore: must_be_immutable
-class MockFileSaveLocation extends _i1.Mock implements _i5.FileSaveLocation {
+class MockFileSaveLocation extends _i1.Mock implements _i6.FileSaveLocation {
   @override
   String get path => (super.noSuchMethod(
         Invocation.getter(#path),
-        returnValue: _i6.dummyValue<String>(
+        returnValue: _i7.dummyValue<String>(
           this,
           Invocation.getter(#path),
         ),
-        returnValueForMissingStub: _i6.dummyValue<String>(
+        returnValueForMissingStub: _i7.dummyValue<String>(
           this,
           Invocation.getter(#path),
         ),
@@ -284,7 +297,7 @@ class MockFileSaveLocation extends _i1.Mock implements _i5.FileSaveLocation {
 ///
 /// See the documentation for Mockito's code generation for more information.
 // ignore: must_be_immutable
-class MockXTypeGroup extends _i1.Mock implements _i7.XTypeGroup {
+class MockXTypeGroup extends _i1.Mock implements _i8.XTypeGroup {
   @override
   bool get allowsAny => (super.noSuchMethod(
         Invocation.getter(#allowsAny),
@@ -307,7 +320,7 @@ class MockXTypeGroup extends _i1.Mock implements _i7.XTypeGroup {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockAssignmentGenerator extends _i1.Mock
-    implements _i8.AssignmentGenerator {
+    implements _i4.AssignmentGenerator {
   @override
   Map<String, double> get hoursPerShiftType => (super.noSuchMethod(
         Invocation.getter(#hoursPerShiftType),
@@ -330,23 +343,39 @@ class MockAssignmentGenerator extends _i1.Mock
       ) as bool);
 
   @override
-  _i9.Future<bool> retryAssignments(
-    _i10.Roster? roster,
+  _i9.Future<List<_i10.Roster>> retryAssignments(
+    List<_i11.Doctor>? doctors,
+    List<_i12.Shift>? shifts,
     int? retries,
-    _i3.ValueNotifier<double>? progressNotifier,
-  ) =>
+    _i3.ValueNotifier<double>? progressNotifier, [
+    int? outputs = 10,
+  ]) =>
       (super.noSuchMethod(
         Invocation.method(
           #retryAssignments,
           [
-            roster,
+            doctors,
+            shifts,
             retries,
             progressNotifier,
+            outputs,
           ],
         ),
-        returnValue: _i9.Future<bool>.value(false),
-        returnValueForMissingStub: _i9.Future<bool>.value(false),
-      ) as _i9.Future<bool>);
+        returnValue: _i9.Future<List<_i10.Roster>>.value(<_i10.Roster>[]),
+        returnValueForMissingStub:
+            _i9.Future<List<_i10.Roster>>.value(<_i10.Roster>[]),
+      ) as _i9.Future<List<_i10.Roster>>);
+
+  @override
+  bool assignShiftsMultipleRosters(List<_i10.Roster>? rosters) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #assignShiftsMultipleRosters,
+          [rosters],
+        ),
+        returnValue: false,
+        returnValueForMissingStub: false,
+      ) as bool);
 
   @override
   bool assignShifts(_i10.Roster? roster) => (super.noSuchMethod(
@@ -357,4 +386,43 @@ class MockAssignmentGenerator extends _i1.Mock
         returnValue: false,
         returnValueForMissingStub: false,
       ) as bool);
+
+  @override
+  bool isSameDate(
+    DateTime? date1,
+    DateTime? date2,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #isSameDate,
+          [
+            date1,
+            date2,
+          ],
+        ),
+        returnValue: false,
+        returnValueForMissingStub: false,
+      ) as bool);
+
+  @override
+  _i4.AssignmentGenerator copy() => (super.noSuchMethod(
+        Invocation.method(
+          #copy,
+          [],
+        ),
+        returnValue: _FakeAssignmentGenerator_3(
+          this,
+          Invocation.method(
+            #copy,
+            [],
+          ),
+        ),
+        returnValueForMissingStub: _FakeAssignmentGenerator_3(
+          this,
+          Invocation.method(
+            #copy,
+            [],
+          ),
+        ),
+      ) as _i4.AssignmentGenerator);
 }

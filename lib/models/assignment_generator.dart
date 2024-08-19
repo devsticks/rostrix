@@ -1,8 +1,40 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'roster.dart';
 import 'doctor.dart';
 import 'shift.dart';
+
+class ScoredRoster {
+  Roster roster;
+  double totalScore;
+  double hoursStdevScore;
+  double weekendCallsStdevScore;
+  double weekdayCallsStdevScore;
+  double weekdayCaesarCoverStdevScore;
+  double weekdaySecondOnCallStdevScore;
+  double meanCallSpreadScore;
+  double meanCallSpreadStdevScore;
+  double callSpreadStdevScore;
+
+  ScoredRoster(
+    this.roster,
+    this.totalScore, [
+    this.hoursStdevScore = 0,
+    this.weekendCallsStdevScore = 0,
+    this.weekdayCallsStdevScore = 0,
+    this.weekdayCaesarCoverStdevScore = 0,
+    this.weekdaySecondOnCallStdevScore = 0,
+    this.meanCallSpreadScore = 0,
+    this.meanCallSpreadStdevScore = 0,
+    this.callSpreadStdevScore = 0,
+  ]);
+
+  @override
+  String toString() {
+    return 'ScoredRoster(roster: $roster, totalScore: $totalScore, hoursStdevScore: $hoursStdevScore, weekendCallsStdevScore: $weekendCallsStdevScore, weekdayCallsStdevScore: $weekdayCallsStdevScore, weekdayCaesarCoverStdevScore: $weekdayCaesarCoverStdevScore, weekdaySecondOnCallStdevScore: $weekdaySecondOnCallStdevScore, meanCallSpreadScore: $meanCallSpreadScore, meanCallSpreadStdevScore: $meanCallSpreadStdevScore, callSpreadStdevScore: $callSpreadStdevScore)';
+  }
+}
 
 class AssignmentGenerator {
   final Map<String, double> hoursPerShiftType;
@@ -25,43 +57,104 @@ class AssignmentGenerator {
     assert(maxOvertimeHours > 0);
   }
 
-  Future<bool> retryAssignments(Roster roster, int retries,
-      ValueNotifier<double> progressNotifier) async {
-    roster.clearAssignments();
-    Roster bestRoster = roster;
-    double bestScore = double.infinity;
+  /// Given a set of rosters and a number of retries, this function will attempt to
+  /// fill the rosters with valid assignments. If no valid assignments are found
+  /// after the given number of retries, the function will return false.
+  /// Otherwise, the function will return true and update the rosters, ordered by
+  /// the best score found.
+  /// The progressNotifier is used to update the progress of the function.
+  /// The function will return false if less than 10% of the roster permutations
+  /// were valid.
+  /// The function will return true if at least one valid roster permutation was found.
+  ///
+  /// Parameters:
+  /// - doctors: The list of doctors to assign to the rosters
+  /// - shifts: The list of shifts to assign to the rosters
+  /// - retries: The number of candidate rosters to generate
+  /// - progressNotifier: A ValueNotifier to update the progress of the function
+  /// - outputs: The number of top rosters to return
+  ///
+  /// Returns:
+  /// - A Future<List<Roster>> containing the top roster permutations found
+  ///
+  /// Example:
+  /// ```dart
+  /// List<Doctor> doctors = [
+  ///   Doctor(name: 'Dr. A', canPerformAnaesthetics: true, canPerformCaesars: true),
+  ///   Doctor(name: 'Dr. B', canPerformAnaesthetics: true, canPerformCaesars: true),
+  ///   Doctor(name: 'Dr. C', canPerformAnaesthetics: true, canPerformCaesars: true),
+  ///   Doctor(name: 'Dr. D', canPerformAnaesthetics: true, canPerformCaesars: true),
+  ///   Doctor(name: 'Dr. E', canPerformAnaesthetics: true, canPerformCaesars: true),
+  /// ];
+  /// List<Shift> shifts = [
+  ///   Shift(date: DateTime(2022, 1, 1), type: 'Weekday'),
+  ///   Shift(date: DateTime(2022, 1, 2), type: 'Weekend')
+  /// ];
+  /// AssignmentGenerator generator = AssignmentGenerator();
+  /// ValueNotifier<double> progressNotifier = ValueNotifier(0.0);
+  /// Future<List<Roster>> topRosters = generator.retryAssignments(doctors, shifts, 100, progressNotifier);
+  /// ```
+  ///
+  /// See also:
+  /// - [Roster]
+  /// - [Doctor]
+  /// - [Shift]
+  /// - [ValueNotifier]
+  /// - [Future]
+  /// - [bool]
+  Future<List<Roster>> retryAssignments(List<Doctor> doctors,
+      List<Shift> shifts, int retries, ValueNotifier<double> progressNotifier,
+      [int outputs = 10]) async {
+    List<ScoredRoster> topScoredRosters = List.generate(
+        outputs,
+        (_) => ScoredRoster(
+            Roster(doctors: doctors, shifts: shifts), double.infinity));
     int validRostersFound = 0;
 
+    Roster candidateRoster = Roster(doctors: doctors, shifts: shifts);
     for (int i = 0; i < retries; i++) {
       progressNotifier.value = (i + 1) / retries;
       await Future.delayed(const Duration(microseconds: 1));
 
-      roster.clearAssignments();
-      Roster tempRoster = roster;
-
-      bool filled = assignShifts(tempRoster);
+      candidateRoster.clearAssignments();
+      bool filled = assignShifts(candidateRoster);
 
       if (filled) {
         validRostersFound++;
-        double score = _calculateScore(tempRoster);
-        if (score < bestScore) {
-          bestScore = score;
-          bestRoster = tempRoster;
+        double score = _calculateScoreDetailed(candidateRoster).totalScore;
+        if (score < topScoredRosters[outputs - 1].totalScore) {
+          topScoredRosters[outputs - 1] =
+              ScoredRoster(candidateRoster.copy(), score);
+          topScoredRosters.sort((a, b) => a.totalScore.compareTo(b.totalScore));
         }
       }
     }
 
     if (validRostersFound == 0) {
-      print('No valid roster permutations found in $retries tries');
-      return false;
+      return [];
     } else {
       if (validRostersFound / retries < 0.1) {
         print('< 10% of roster permutations were valid');
       }
-      roster.doctors = bestRoster.doctors;
-      roster.shifts = bestRoster.shifts;
-      return true;
+      List<ScoredRoster> detailedScores = topScoredRosters
+          .map((scoredRoster) => _calculateScoreDetailed(scoredRoster.roster))
+          .toList();
+      print(detailedScores);
+      return topScoredRosters
+          .map((scoredRoster) => scoredRoster.roster)
+          .toList();
     }
+  }
+
+  bool assignShiftsMultipleRosters(List<Roster> rosters) {
+    for (Roster roster in rosters) {
+      roster.clearAssignments();
+      bool filled = assignShifts(roster);
+      if (!filled) {
+        return false;
+      }
+    }
+    return true;
   }
 
   bool assignShifts(Roster roster) {
@@ -235,24 +328,20 @@ class AssignmentGenerator {
     }
   }
 
-  double _calculateScore(Roster roster,
-      [double hoursVarianceWeight = 1.0,
-      double weekendCallsVarianceWeight = 1.0,
-      double weekdayCallsVarianceWeight = 1.0,
-      double weekdayCaesarCoverVarianceWeight = 1.0,
-      double weekdaySecondOnCallVarianceWeight = 1.0,
-      double callSpreadWeight = 1.0]) {
-    // Calculate the variance of the weekend / PH calls among doctors
+  num _calculateWeekendCallsStdev(Roster roster) {
+    // Calculate the standard deviation of the weekend / PH calls among doctors
     double meanWeekendCalls =
         roster.doctors.fold(0.0, (sum, doctor) => sum + doctor.weekendCalls) /
             roster.doctors.length;
-    double weekendCallsVariance = roster.doctors.fold(
-            0.0,
-            (sum, doctor) =>
-                sum + pow(doctor.weekendCalls - meanWeekendCalls, 2)) /
-        roster.doctors.length;
+    num weekendCallsStdev = pow(
+        roster.doctors.fold(
+                0.0,
+                (sum, doctor) =>
+                    sum + pow(doctor.weekendCalls - meanWeekendCalls, 2)) /
+            roster.doctors.length,
+        0.5);
 
-    // Normalize the variance by the number of weekend days
+    // Normalize the standard deviation by the number of weekend days
     int weekendDays = 0;
     for (Shift shift in roster.shifts) {
       if (shift.type == 'Weekend' || shift.type == 'Holiday') {
@@ -261,20 +350,32 @@ class AssignmentGenerator {
     }
 
     if (weekendDays != 0) {
-      weekendCallsVariance /= weekendDays;
+      weekendCallsStdev /= weekendDays;
     }
 
-    // Calculate the variance of overtime hours among doctors
+    return weekendCallsStdev;
+  }
+
+  num _calculateHoursStdev(Roster roster) {
+    // Calculate the standard deviation of overtime hours among doctors
     double meanHours =
         roster.doctors.fold(0.0, (sum, doctor) => sum + doctor.overtimeHours) /
             roster.doctors.length;
-    double hoursVariance = roster.doctors.fold(0.0,
-            (sum, doctor) => sum + pow(doctor.overtimeHours - meanHours, 2)) /
-        roster.doctors.length;
+    num hoursStdev = pow(
+        roster.doctors.fold(
+                0.0,
+                (sum, doctor) =>
+                    sum + pow(doctor.overtimeHours - meanHours, 2)) /
+            roster.doctors.length,
+        0.5);
 
-    hoursVariance /= maxOvertimeHours;
+    hoursStdev /= maxOvertimeHours;
 
-    // Calculate the variance of weekday calls among doctors
+    return hoursStdev;
+  }
+
+  // Calculate the standard deviation of weekday calls among doctors
+  num _calculateWeekdayCallsStdev(Roster roster, int weekendDays) {
     double meanWeekdayCalls = roster.doctors.fold(
             0.0,
             (sum, doctor) =>
@@ -284,21 +385,26 @@ class AssignmentGenerator {
                 doctor.secondOnCallWeekdayCalls) /
         roster.doctors.length;
 
-    double weekdayCallsVariance = roster.doctors.fold(
-            0.0,
-            (sum, doctor) =>
-                sum +
-                pow(
-                    doctor.overnightWeekdayCalls +
-                        doctor.caesarCoverWeekdayCalls +
-                        doctor.secondOnCallWeekdayCalls -
-                        meanWeekdayCalls,
-                    2)) /
-        roster.doctors.length;
+    num weekdayCallsStdev = pow(
+        roster.doctors.fold(
+                0.0,
+                (sum, doctor) =>
+                    sum +
+                    pow(
+                        doctor.overnightWeekdayCalls +
+                            doctor.caesarCoverWeekdayCalls +
+                            doctor.secondOnCallWeekdayCalls -
+                            meanWeekdayCalls,
+                        2)) /
+            roster.doctors.length,
+        0.5);
 
-    weekdayCallsVariance /= 30 - weekendDays;
+    weekdayCallsStdev /= 30 - weekendDays;
+    return weekdayCallsStdev;
+  }
 
-    // Calculate the variance of weekday Caesar Cover calls among doctors
+// Calculate the standard deviation of weekday Caesar Cover calls among doctors
+  num _calculateCaesarCoverStdev(Roster roster, int weekendDays) {
     double meanCaesarCoverCalls = roster.doctors.fold(
             0.0,
             (sum, doctor) =>
@@ -307,37 +413,46 @@ class AssignmentGenerator {
                 doctor.caesarCoverWeekendCalls) /
         roster.doctors.length;
 
-    double weekdayCaesarCoverVariance = roster.doctors.fold(
-            0.0,
-            (sum, doctor) =>
-                sum +
-                pow(
-                    doctor.caesarCoverWeekdayCalls +
-                        doctor.caesarCoverWeekendCalls -
-                        meanCaesarCoverCalls,
-                    2)) /
-        roster.doctors.length;
+    num weekdayCaesarCoverStdev = pow(
+        roster.doctors.fold(
+                0.0,
+                (sum, doctor) =>
+                    sum +
+                    pow(
+                        doctor.caesarCoverWeekdayCalls +
+                            doctor.caesarCoverWeekendCalls -
+                            meanCaesarCoverCalls,
+                        2)) /
+            roster.doctors.length,
+        0.5);
 
-    weekdayCaesarCoverVariance /= 30 - weekendDays;
+    weekdayCaesarCoverStdev /= 30 - weekendDays;
+    return weekdayCaesarCoverStdev;
+  }
 
-    // Calculate the variance of weekday Second On Call calls among doctors
+// Calculate the standard deviation of weekday Second On Call calls among doctors
+  num _calculateSecondOnCallStdev(Roster roster, int weekendDays) {
     double meanSecondOnCallCalls = roster.doctors
             .fold(0.0, (sum, doctor) => sum + doctor.secondOnCallWeekdayCalls) /
         roster.doctors.length;
 
-    double weekdaySecondOnCallVariance = roster.doctors.fold(
-            0.0,
-            (sum, doctor) =>
-                sum +
-                pow(doctor.secondOnCallWeekdayCalls - meanSecondOnCallCalls,
-                    2)) /
-        roster.doctors.length;
+    num weekdaySecondOnCallStdev = pow(
+        roster.doctors.fold(
+                0.0,
+                (sum, doctor) =>
+                    sum +
+                    pow(doctor.secondOnCallWeekdayCalls - meanSecondOnCallCalls,
+                        2)) /
+            roster.doctors.length,
+        0.5);
 
-    weekdaySecondOnCallVariance /= 30 - weekendDays;
+    weekdaySecondOnCallStdev /= 30 - weekendDays;
+    return weekdaySecondOnCallStdev;
+  }
 
-    // Calculate the spread of calls over the month for each doctor (ideally want them as evenly-spaced as possible)
-    // This is a matter of maximising the space between each call for each doctor - larger is better
-    double callSpread = 0.0;
+// Calculate the spread of calls over the month for each doctor
+  List<num> _calculateDoctorsCallSpreadStdevs(Roster roster) {
+    List<num> doctorsCallSpreadStdevs = [];
     for (Doctor doctor in roster.doctors) {
       List<DateTime> callDates = [];
       for (Shift shift in roster.shifts) {
@@ -348,23 +463,188 @@ class AssignmentGenerator {
           callDates.add(shift.date);
         }
       }
-
       callDates.sort();
+      List<int> doctorCallSpreads = [];
       for (int i = 1; i < callDates.length; i++) {
-        callSpread += callDates[i].difference(callDates[i - 1]).inDays;
+        doctorCallSpreads.add(callDates[i].difference(callDates[i - 1]).inDays);
       }
+      double doctorMeanCallSpread =
+          doctorCallSpreads.fold(0, (sum, spread) => sum + spread) /
+              doctorCallSpreads.length;
+      doctorsCallSpreadStdevs.add(pow(
+          doctorCallSpreads.fold(
+                  0.0,
+                  (sum, spread) =>
+                      sum + pow(spread - doctorMeanCallSpread, 2)) /
+              doctorCallSpreads.length,
+          0.5));
     }
+    return doctorsCallSpreadStdevs;
+  }
 
-    // Normalize the call spread, and to make it a score, subtract it from 1
-    double maxSpread = 30 * roster.shifts.length / roster.doctors.length;
-    callSpread = 1 - (callSpread / maxSpread);
+// Calculate the mean call spread for each doctor
+  List<double> _calculateDoctorsMeanCallSpreads(Roster roster) {
+    List<double> doctorsMeanCallSpreads = [];
+    for (Doctor doctor in roster.doctors) {
+      List<DateTime> callDates = [];
+      for (Shift shift in roster.shifts) {
+        if (shift.mainDoctor == doctor ||
+            shift.caesarCoverDoctor == doctor ||
+            shift.secondOnCallDoctor == doctor ||
+            shift.weekendDayDoctor == doctor) {
+          callDates.add(shift.date);
+        }
+      }
+      callDates.sort();
+      List<int> doctorCallSpreads = [];
+      for (int i = 1; i < callDates.length; i++) {
+        doctorCallSpreads.add(callDates[i].difference(callDates[i - 1]).inDays);
+      }
+      double doctorMeanCallSpread =
+          doctorCallSpreads.fold(0, (sum, spread) => sum + spread) /
+              doctorCallSpreads.length;
+      doctorsMeanCallSpreads.add(doctorMeanCallSpread);
+    }
+    return doctorsMeanCallSpreads;
+  }
 
-    return hoursVarianceWeight * hoursVariance +
-        weekendCallsVarianceWeight * weekendCallsVariance +
-        weekdayCallsVarianceWeight * weekdayCallsVariance +
-        weekdayCaesarCoverVarianceWeight * weekdayCaesarCoverVariance +
-        weekdaySecondOnCallVarianceWeight * weekdaySecondOnCallVariance +
-        callSpreadWeight * callSpread;
+// Calculate the maximum possible spread of calls over the roster
+  double _calculateMaxSpread(Roster roster) {
+    int weekendDays = _calculateWeekendDays(roster);
+    int rolesPerShiftWeekend = 4;
+    int rolesPerShiftWeekday = 3;
+    int totalRoles = rolesPerShiftWeekend * weekendDays +
+        rolesPerShiftWeekday * (30 - weekendDays);
+    double rolesPerShift = totalRoles / roster.doctors.length;
+    double maxSpread = totalRoles / (roster.doctors.length * rolesPerShift);
+    return maxSpread;
+  }
+
+// Calculate the spread of calls over the month for each doctor
+  double _calculateMeanDoctorsCallSpreadStdev(
+      List<num> doctorsCallSpreadStdevs) {
+    double meanDoctorsCallSpreadStdev =
+        doctorsCallSpreadStdevs.fold(0.0, (sum, stdev) => sum + stdev) /
+            doctorsCallSpreadStdevs.length;
+    return meanDoctorsCallSpreadStdev;
+  }
+
+// Calculate the mean call spread
+  double _calculateMeanCallSpread(
+      List<double> doctorsMeanCallSpreads, double maxSpread) {
+    double meanDoctorsMeanCallSpread =
+        doctorsMeanCallSpreads.fold(0.0, (sum, spread) => sum + spread) /
+            doctorsMeanCallSpreads.length;
+    double meanCallSpread = (maxSpread - meanDoctorsMeanCallSpread) / maxSpread;
+    return meanCallSpread;
+  }
+
+// Calculate the standard deviation of the mean call spreads
+  num _calculateMeanCallSpreadStdev(
+      List<double> doctorsMeanCallSpreads, double meanDoctorsMeanCallSpread) {
+    num meanCallSpreadStdev = pow(
+        doctorsMeanCallSpreads.fold(
+                0.0,
+                (sum, meanSpread) =>
+                    sum + pow(meanSpread - meanDoctorsMeanCallSpread, 2)) /
+            doctorsMeanCallSpreads.length,
+        0.5);
+    return meanCallSpreadStdev;
+  }
+
+// Calculate the standard deviation of call spread
+  num _calculateCallSpreadStdev(List<num> doctorsCallSpreadStdevs,
+      double meanDoctorsCallSpreadStdev, double maxSpread) {
+    num callSpreadStdev = pow(
+        doctorsCallSpreadStdevs.fold(
+                0.0,
+                (sum, stdev) =>
+                    sum + pow(stdev - meanDoctorsCallSpreadStdev, 2)) /
+            doctorsCallSpreadStdevs.length,
+        0.5);
+    callSpreadStdev = callSpreadStdev / maxSpread;
+    return callSpreadStdev;
+  }
+
+  int _calculateWeekendDays(Roster roster) {
+    return roster.shifts
+        .where((shift) => shift.type == 'Weekend' || shift.type == 'Holiday')
+        .length;
+  }
+
+  ScoredRoster _calculateScoreDetailed(Roster roster,
+      [double hoursStdevWeight = 50.0,
+      double weekendCallsStdevWeight = 1.0,
+      double weekdayCallsStdevWeight = 1.0,
+      double weekdayCaesarCoverStdevWeight = 1.0,
+      double weekdaySecondOnCallStdevWeight = 1.0,
+      double meanCallSpreadWeight = 0.0,
+      double meanCallSpreadStdevWeight = 1.0,
+      double callSpreadStdevWeight = 1.0]) {
+    num weekendCallsStdev = _calculateWeekendCallsStdev(roster);
+    num hoursStdev = _calculateHoursStdev(roster);
+
+    int weekendDays = _calculateWeekendDays(roster);
+
+    num weekdayCallsStdev = _calculateWeekdayCallsStdev(roster, weekendDays);
+    num weekdayCaesarCoverStdev =
+        _calculateCaesarCoverStdev(roster, weekendDays);
+    num weekdaySecondOnCallStdev =
+        _calculateSecondOnCallStdev(roster, weekendDays);
+
+    List<num> doctorsCallSpreadStdevs =
+        _calculateDoctorsCallSpreadStdevs(roster);
+    List<double> doctorsMeanCallSpreads =
+        _calculateDoctorsMeanCallSpreads(roster);
+
+    double maxSpread = _calculateMaxSpread(roster);
+
+    double meanDoctorsCallSpreadStdev =
+        _calculateMeanDoctorsCallSpreadStdev(doctorsCallSpreadStdevs);
+    double meanCallSpread =
+        _calculateMeanCallSpread(doctorsMeanCallSpreads, maxSpread);
+
+    double meanDoctorsMeanCallSpread =
+        doctorsMeanCallSpreads.fold(0.0, (sum, spread) => sum + spread) /
+            doctorsMeanCallSpreads.length;
+    num meanCallSpreadStdev = _calculateMeanCallSpreadStdev(
+        doctorsMeanCallSpreads, meanDoctorsMeanCallSpread);
+
+    num callSpreadStdev = _calculateCallSpreadStdev(
+        doctorsCallSpreadStdevs, meanDoctorsCallSpreadStdev, maxSpread);
+
+    double hoursStdevScore = hoursStdevWeight * hoursStdev;
+    double weekendCallsStdevScore = weekendCallsStdevWeight * weekendCallsStdev;
+    double weekdayCallsStdevScore = weekdayCallsStdevWeight * weekdayCallsStdev;
+    double weekdayCaesarCoverStdevScore =
+        weekdayCaesarCoverStdevWeight * weekdayCaesarCoverStdev;
+    double weekdaySecondOnCallStdevScore =
+        weekdaySecondOnCallStdevWeight * weekdaySecondOnCallStdev;
+    double meanCallSpreadScore = meanCallSpreadWeight * meanCallSpread;
+    double meanCallSpreadStdevScore =
+        meanCallSpreadStdevWeight * meanCallSpreadStdev;
+    double callSpreadStdevScore = callSpreadStdevWeight * callSpreadStdev;
+
+    double totalScore = hoursStdevScore +
+        weekendCallsStdevScore +
+        weekdayCallsStdevScore +
+        weekdayCaesarCoverStdevScore +
+        weekdaySecondOnCallStdevScore +
+        meanCallSpreadScore +
+        meanCallSpreadStdevScore +
+        callSpreadStdevScore;
+
+    return ScoredRoster(
+        roster,
+        totalScore,
+        hoursStdevScore,
+        weekendCallsStdevScore,
+        weekdayCallsStdevScore,
+        weekdayCaesarCoverStdevScore,
+        weekdaySecondOnCallStdevScore,
+        meanCallSpreadScore,
+        meanCallSpreadStdevScore,
+        callSpreadStdevScore);
   }
 
   AssignmentGenerator copy() {
